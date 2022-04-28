@@ -84,9 +84,9 @@ class Product(object):
 
 class Recipe(object):
 
-    def __init__(self, recipe_ID, step_ID):
+    def __init__(self, recipe_ID, step):
         self.recipe_ID = recipe_ID
-        self.step_ID = step_ID
+        self.step = step
 
 class Scheduling(object):
 
@@ -121,9 +121,6 @@ class WorkingTimeMachine(object):
         self.machine_ID = machine_ID
         self.start = start
         self.finish = finish
-
-
-
 
 step1 = Step(step_ID=1, name="Producing bottle")
 step2 = Step(2, "Fill bottle with water")

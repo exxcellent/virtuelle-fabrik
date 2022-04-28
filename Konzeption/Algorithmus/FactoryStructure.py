@@ -84,9 +84,9 @@ class Product(object):
 
 class Recipe(object):
 
-    def __init__(self, recipe_ID, step):
+    def __init__(self, recipe_ID, steps):
         self.recipe_ID = recipe_ID
-        self.step = step
+        self.steps = steps
 
 class Scheduling(object):
 
@@ -125,7 +125,7 @@ class WorkingTimeMachine(object):
 step1 = Step(step_ID=1, name="Producing bottle")
 step2 = Step(2, "Fill bottle with water")
 
-recipe1 = Recipe(recipe_ID=1, step_ID=[step1,step2])
+recipe1 = Recipe(recipe_ID=1, steps=[step1,step2])
 
 product1 = Product(1, 2.0, 1)
 
@@ -166,7 +166,7 @@ machineCapabilities = [
 
 def machineSort(recipe: Recipe):
     machineList = []
-    for s in recipe.step:
+    for s in recipe.steps:
         for m in machineCapabilities:
             if s.step_ID == m.step_ID:
                 machineList += m

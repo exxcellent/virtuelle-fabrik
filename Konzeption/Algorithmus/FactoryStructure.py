@@ -154,6 +154,7 @@ machines = [
     Machine(3, 1, 0, 4.0, 'false', 3, 2, 0.02),
     Machine(4, 2, 0, 4.0, 'false', 5, 3, 0.01),
     Machine(5, 2, 0, 5.0, 'false', 5, 3, 0.008),
+    Machine(6, 2, 0, 6.0, 'false', 2, 1, 0.018),
 ]
 
 machineCapabilities = [
@@ -162,6 +163,7 @@ machineCapabilities = [
     MachineCapability(3,1,3),                                   #1
     MachineCapability(4,1,5),                                   #1
     MachineCapability(5,2,5),                                   #2
+    MachineCapability(6,3,2),                                   #2
 ]
 
 def machineSort(recipe: Recipe):
@@ -174,14 +176,15 @@ def machineSort(recipe: Recipe):
         counter = 0
         for m in machineCapabilities:
             if s.step_ID == m.step_ID:
-                machineList += m
+                machineList.append(m)
                 counter += 1
 
     numberOfSteps = len(stepList)
     for m in machineList:
+        print("Machine ID:" ,m.machine_ID , ", Step ID:" , m.step_ID)
 
 
 
-
+machineSort(recipe1)
 
 # calculate Price per Product

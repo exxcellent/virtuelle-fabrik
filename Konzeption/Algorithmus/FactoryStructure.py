@@ -1,8 +1,11 @@
+from scipy.optimize import minimize
+import math
+import numpy as np
 class Batch(object):
 
     def __init__(self, product_ID, productCount, produced, finished, priority):
         self.product_ID = product_ID
-        self.procuctCount = productCount
+        self.productCount = productCount
         self.produced = produced
         self.finished = finished
         self.priority = priority
@@ -70,23 +73,25 @@ class MaterialRequirements(object):
 
 class MaterialWarehouse(object):
 
-    def __init__(self, material_ID, stock, stockUp):
+    def __init__(self, material_ID, stock, stockUp, costsPerUnit):
         self.material_ID = material_ID
         self.stock = stock
         self.stockUp = stockUp
+        self.costsPerUnit = costsPerUnit
 
 class Product(object):
 
-    def __init__(self, product_ID, sellPrice, receipe_ID):
+    def __init__(self, product_ID, sellPrice, recipe_ID):
         self.product_ID = product_ID
         self.sellPrice = sellPrice
-        self.receipe_ID = receipe_ID
+        self.recipe_ID = recipe_ID
 
 class Recipe(object):
 
-    def __init__(self, recipe_ID, step_ID):
+    def __init__(self, recipe_ID, steps, product_ID):
         self.recipe_ID = recipe_ID
-        self.step_ID = step_ID
+        self.steps = steps
+        self.product_ID = product_ID
 
 class Scheduling(object):
 
@@ -109,11 +114,12 @@ class Step(object):
 
 class Warehouse(object):
 
-    def __init__(self, stock, capacity, output, product_ID):
+    def __init__(self, stock, capacity, output, product_ID, costsPerUnit):
         self.stock = stock
         self.capacity = capacity
         self.output = output
         self.product_ID = product_ID
+        self.costsPerUnit = costsPerUnit
 
 class WorkingTimeMachine(object):
 
@@ -125,7 +131,9 @@ class WorkingTimeMachine(object):
 step1 = Step(step_ID=1, name="Producing bottle")
 step2 = Step(2, "Fill bottle with water")
 
-recipe1 = Recipe(recipe_ID=1, step_ID=[step1,step2])
+recipes = [
+    Recipe(recipe_ID=1, steps=[step1,step2], product_ID=1)
+    ]
 
 product1 = Product(1, 2.0, 1)
 
@@ -134,8 +142,12 @@ materials =[
     Material(2, "water", 0.1),
 ]
 
+materialSlots = [
+    MaterialWarehouse(1, 30, 0, 100)
+]
+
 matRequirements = [
-    MaterialRequirements(1, 1, 2),
+    MaterialRequirements(recipe_ID=1, material_ID=1, requiredQuantities=2),
     MaterialRequirements(1, 2, 1),
 ]
 
@@ -144,9 +156,6 @@ stations = [
     Station(2,11),
 ]
 
-employeesStation1 = stations[0].employeeCapacity
-employeesStation2 = stations[1].employeeCapacity
-
 machines = [
     Machine(machine_ID=1,station_ID=1, setupTime=0, costsPerMinute=5.0, finished='false', employeeCapacity=5,
             minimumNumberOfEmployees=3, probabilityOfDefault=0.01),
@@ -154,14 +163,70 @@ machines = [
     Machine(3, 1, 0, 4.0, 'false', 3, 2, 0.02),
     Machine(4, 2, 0, 4.0, 'false', 5, 3, 0.01),
     Machine(5, 2, 0, 5.0, 'false', 5, 3, 0.008),
+    Machine(6, 2, 0, 6.0, 'false', 2, 1, 0.018),
 ]
 
 machineCapabilities = [
-    MachineCapability(machine_ID=1,step_ID=1,clockRate=3),      #1
-    MachineCapability(2,2,4),                                   #2
-    MachineCapability(3,1,2),                                   #1
-    MachineCapability(4,1,3),                                   #1
-    MachineCapability(5,2,4),                                   #2
+    MachineCapability(machine_ID=1,step_ID=1,clockRate=5),      #1
+    MachineCapability(2,2,7),                                   #2
+    MachineCapability(3,1,3),                                   #1
+    MachineCapability(4,1,5),                                   #1
+    MachineCapability(5,2,5),                                   #2
+    MachineCapability(6,3,2),                                   #2
 ]
 
-def pricePerProduct
+def machineSort(recipe: Recipe):
+    machineList = []
+    counter = None
+    stepList = []
+    for s in recipe.steps:
+        if counter is not None:
+            stepList.append(counter)
+        counter = 0
+        for m in machineCapabilities:
+            if s.step_ID == m.step_ID:
+                machineList.append(m)
+                counter += 1
+
+    numberOfSteps = len(stepList)
+    for m in machineList:
+        print("Machine ID:" ,m.machine_ID , ", Step ID:" , m.step_ID)
+
+def asdf(x):
+    return (x-2.5)**2
+
+#print(minimize(asdf, 3))
+
+m = 50
+orderCosts = 200
+#machineSort(recipe1)
+matID = 1
+b1 = Batch(1, 100, 0, 'false', 10)
+
+def materialPlanning(batch):
+    recipeID = 0
+    matList = []
+    matAmountList = []
+    for rec in recipes:
+        if batch.product_ID == rec.product_ID:
+            recipeID = rec.recipe_ID
+    for mat in matRequirements:
+        if mat.recipe_ID == recipeID:
+            matList.append(mat.material_ID)
+            matAmountList.append(mat.requiredQuantities*batch.productCount)
+    narr = np.array([matList, matAmountList])
+    return narr
+print(materialPlanning(b1))
+
+#https://www.microtech.de/blog/optimale-bestellmenge
+def optimizedOrderAmount(x):        #Material ID, Menge, OrderCosts übergeben
+    storageCosts = 0
+    for ms in materialSlots:
+        if ms.material_ID == matID:
+            storageCosts = ms.costsPerUnit
+    return math.sqrt((2*m*orderCosts)/(storageCosts))
+
+res = minimize(optimizedOrderAmount, 1)
+if res.fun < m:
+    res.fun = m
+print(res.fun)

@@ -166,13 +166,22 @@ machineCapabilities = [
 
 def machineSort(recipe: Recipe):
     machineList = []
+    counter = None
+    stepList = []
     for s in recipe.steps:
+        if counter is not None:
+            stepList.append(counter)
+        counter = 0
         for m in machineCapabilities:
             if s.step_ID == m.step_ID:
                 machineList += m
+                counter += 1
+
+    numberOfSteps = len(stepList)
+    for m in machineList:
+
 
 
 
 
 # calculate Price per Product
-def pricePerProduct():

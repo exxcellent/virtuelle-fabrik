@@ -77,10 +77,10 @@ class MaterialWarehouse(object):
 
 class Product(object):
 
-    def __init__(self, product_ID, sellPrice, receipe_ID):
+    def __init__(self, product_ID, sellPrice, recipe_ID):
         self.product_ID = product_ID
         self.sellPrice = sellPrice
-        self.receipe_ID = receipe_ID
+        self.recipe_ID = recipe_ID
 
 class Recipe(object):
 
@@ -122,6 +122,9 @@ class WorkingTimeMachine(object):
         self.start = start
         self.finish = finish
 
+
+
+
 step1 = Step(step_ID=1, name="Producing bottle")
 step2 = Step(2, "Fill bottle with water")
 
@@ -135,7 +138,7 @@ materials =[
 ]
 
 matRequirements = [
-    MaterialRequirements(1, 1, 2),
+    MaterialRequirements(recipe_ID=1, material_ID=1, requiredQuantities=2),
     MaterialRequirements(1, 2, 1),
 ]
 
@@ -157,11 +160,22 @@ machines = [
 ]
 
 machineCapabilities = [
-    MachineCapability(machine_ID=1,step_ID=1,clockRate=3),      #1
-    MachineCapability(2,2,4),                                   #2
-    MachineCapability(3,1,2),                                   #1
-    MachineCapability(4,1,3),                                   #1
-    MachineCapability(5,2,4),                                   #2
+    MachineCapability(machine_ID=1,step_ID=1,clockRate=5),      #1
+    MachineCapability(2,2,7),                                   #2
+    MachineCapability(3,1,3),                                   #1
+    MachineCapability(4,1,5),                                   #1
+    MachineCapability(5,2,5),                                   #2
 ]
 
-def pricePerProduct
+def machineSort(recipe: Recipe):
+    machineList = []
+    for s in recipe.step:
+        for m in machineCapabilities:
+            if s.step_ID == m.step_ID:
+                machineList += m
+
+
+
+
+# calculate Price per Product
+def pricePerProduct():

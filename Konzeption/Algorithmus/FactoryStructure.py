@@ -1,3 +1,5 @@
+from scipy.optimize import minimize
+import math
 class Batch(object):
 
     def __init__(self, product_ID, productCount, produced, finished, priority):
@@ -70,10 +72,11 @@ class MaterialRequirements(object):
 
 class MaterialWarehouse(object):
 
-    def __init__(self, material_ID, stock, stockUp):
+    def __init__(self, material_ID, stock, stockUp, costsPerUnit):
         self.material_ID = material_ID
         self.stock = stock
         self.stockUp = stockUp
+        self.costsPerUnit = costsPerUnit
 
 class Product(object):
 
@@ -109,11 +112,12 @@ class Step(object):
 
 class Warehouse(object):
 
-    def __init__(self, stock, capacity, output, product_ID):
+    def __init__(self, stock, capacity, output, product_ID, costsPerUnit):
         self.stock = stock
         self.capacity = capacity
         self.output = output
         self.product_ID = product_ID
+        self.costsPerUnit = costsPerUnit
 
 class WorkingTimeMachine(object):
 
@@ -134,6 +138,10 @@ materials =[
     Material(2, "water", 0.1),
 ]
 
+materialSlots = [
+    MaterialWarehouse(1, 30, 0, 1.2)
+]
+
 matRequirements = [
     MaterialRequirements(recipe_ID=1, material_ID=1, requiredQuantities=2),
     MaterialRequirements(1, 2, 1),
@@ -143,9 +151,6 @@ stations = [
     Station(station_ID=1, employeeCapacity=15),
     Station(2,11),
 ]
-
-employeesStation1 = stations[0].employeeCapacity
-employeesStation2 = stations[1].employeeCapacity
 
 machines = [
     Machine(machine_ID=1,station_ID=1, setupTime=0, costsPerMinute=5.0, finished='false', employeeCapacity=5,
@@ -183,8 +188,23 @@ def machineSort(recipe: Recipe):
     for m in machineList:
         print("Machine ID:" ,m.machine_ID , ", Step ID:" , m.step_ID)
 
+def asdf(x):
+    return (x-2.5)**2
 
+#print(minimize(asdf, 3))
 
-machineSort(recipe1)
+m = 50
+orderCosts = 200
+#machineSort(recipe1)
+matID = 1
 
+#https://www.microtech.de/blog/optimale-bestellmenge/#:~:text=Was%20ist%20die%20optimale%20Bestellmenge,die%20Gesamtkosten%2C%20m%C3%B6glichst%20minimal%20ausfallen.
+def optimizedOrderAmount(x):
+    storageCosts = 0
+    for ms in materialSlots:
+        if ms.material_ID == matID:
+            storageCosts = ms.costsPerUnit
+
+    return math.sqrt((2*m*orderCosts)/(storageCosts))
+print(minimize(optimizedOrderAmount, 100))
 # calculate Price per Product

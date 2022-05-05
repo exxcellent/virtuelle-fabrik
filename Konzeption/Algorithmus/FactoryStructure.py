@@ -219,8 +219,7 @@ def materialPlanning(batch):
 print(materialPlanning(b1))
 
 #https://www.microtech.de/blog/optimale-bestellmenge
-def optimizedOrderAmount(x):        #Material ID, Menge, OrderCosts
-
+def optimizedOrderAmount(x):        #Material ID, Menge, OrderCosts übergeben
     storageCosts = 0
     for ms in materialSlots:
         if ms.material_ID == matID:

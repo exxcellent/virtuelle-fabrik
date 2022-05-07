@@ -73,9 +73,10 @@ class MaterialRequirements(object):
 
 class MaterialWarehouse(object):
 
-    def __init__(self, material_ID, stock, stockUp, costsPerUnit):
+    def __init__(self, material_ID, stock, stockReserved, stockUp, costsPerUnit):
         self.material_ID = material_ID
         self.stock = stock
+        self.stockReserved = stockReserved
         self.stockUp = stockUp
         self.costsPerUnit = costsPerUnit
 
@@ -143,7 +144,8 @@ materials =[
 ]
 
 materialSlots = [
-    MaterialWarehouse(1, 30, 0, 100)
+    MaterialWarehouse(material_ID=1, stock=30, stockReserved=45, stockUp=0, costsPerUnit=1.5),
+    MaterialWarehouse(2, 10, 100, 0, 100)
 ]
 
 matRequirements = [
@@ -192,18 +194,11 @@ def machineSort(recipe: Recipe):
     for m in machineList:
         print("Machine ID:" ,m.machine_ID , ", Step ID:" , m.step_ID)
 
-def asdf(x):
-    return (x-2.5)**2
-
-#print(minimize(asdf, 3))
-
-m = 50
-orderCosts = 200
 #machineSort(recipe1)
-matID = 1
 b1 = Batch(1, 100, 0, 'false', 10)
 
 def materialPlanning(batch):
+    counter = 0
     recipeID = 0
     matList = []
     matAmountList = []
@@ -214,19 +209,35 @@ def materialPlanning(batch):
         if mat.recipe_ID == recipeID:
             matList.append(mat.material_ID)
             matAmountList.append(mat.requiredQuantities*batch.productCount)
+    for mat in matList:             # for Loop for reqMaterial-stock
+        counter +=1
+        for s in materialSlots:
+            if mat == s.material_ID:
+                matAmountList[counter-1] -= s.stock
     narr = np.array([matList, matAmountList])
+
     return narr
-print(materialPlanning(b1))
+print("Product ID and Amount:", "\n",materialPlanning(b1))
 
 #https://www.microtech.de/blog/optimale-bestellmenge
-def optimizedOrderAmount(x):        #Material ID, Menge, OrderCosts übergeben
+def optimizedOrderAmount(x,matID,m,orderCosts):        #Material ID, Menge, OrderCosts übergeben
     storageCosts = 0
     for ms in materialSlots:
         if ms.material_ID == matID:
             storageCosts = ms.costsPerUnit
     return math.sqrt((2*m*orderCosts)/(storageCosts))
 
-res = minimize(optimizedOrderAmount, 1)
-if res.fun < m:
-    res.fun = m
-print(res.fun)
+def calloptOrderAmount(narr):
+    res: object
+    i = 0
+    while i < narr.size/2:
+        opt = minimize(optimizedOrderAmount, 1, args=(narr[0][i],narr[1][i], 200))
+        res = math.ceil(opt.fun)
+        if res < narr[1][i]:
+            res = narr[1][i]
+        print("Optimized Order Amount for Material with ID", i, "is:", res)
+        i += 1
+
+calloptOrderAmount(materialPlanning(b1))
+
+

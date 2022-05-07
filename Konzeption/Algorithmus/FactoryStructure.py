@@ -143,7 +143,7 @@ materials =[
 ]
 
 materialSlots = [
-    MaterialWarehouse(1, 30, 0, 4)
+    MaterialWarehouse(1, 30, 0, 100)
 ]
 
 matRequirements = [
@@ -226,5 +226,7 @@ def optimizedOrderAmount(x):        #Material ID, Menge, OrderCosts übergeben
             storageCosts = ms.costsPerUnit
     return math.sqrt((2*m*orderCosts)/(storageCosts))
 
-print(minimize(optimizedOrderAmount, 100))
-# calculate Price per Product
+res = minimize(optimizedOrderAmount, 1)
+if res.fun < m:
+    res.fun = m
+print(res.fun)

@@ -27,7 +27,7 @@ materials =[
 ]
 
 materialStorages = [
-    MaterialStorage(material_ID=1, stock=30, stockReserved=45, stockUp=0, costsPerUnit=1.5),
+    MaterialStorage(material_ID=1, stock=30, stockReserved=45, stockUp=0, costsPerUnit=2),
     MaterialStorage(2, 10, 100, 0, 100)
 ]
 

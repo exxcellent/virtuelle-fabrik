@@ -45,21 +45,25 @@ def materialPlanning(batch):
 print("Product ID and Amount:", "\n",materialPlanning(b1))
 
 #https://www.microtech.de/blog/optimale-bestellmenge
-def optimizedOrderAmount(x,matID,m,orderCosts):
-    storageCosts = 0
+def getStorageCosts(matID):
     for ms in MaterialRessources.materialStorages:
         if ms.material_ID == matID:
             storageCosts = ms.costsPerUnit
-    return orderCosts/(storageCosts*(m+x))
+    return storageCosts
 
-def calloptOrderAmount(narr):
+def optimizedOrderAmount(x,matID,m,orderCosts):
+    storageCosts = 0
+    return orderCosts/(getStorageCosts(matID)*(m+x))
+
+def calloptOrderAmount(narr,orderCosts):
     i = 0
     while i < narr.size/2:
-        opt = minimize(optimizedOrderAmount, 200, args=(narr[0][i],narr[1][i], 5000))
-        res = math.ceil(opt.fun)
+        opt = minimize(optimizedOrderAmount, 200, args=(narr[0][i],narr[1][i], orderCosts))
+        fun = math.ceil(opt.fun)
+        res = orderCosts/fun*getStorageCosts(narr[0][i])
         if res < narr[1][i]:        # if optimum smaller than needed amount, res = needed amount
             res = narr[1][i]
         print("Optimized Order Amount for Material with ID", narr[0][i], "is:", res)
         i += 1
 
-calloptOrderAmount(materialPlanning(b1))
+calloptOrderAmount(materialPlanning(b1), 200)

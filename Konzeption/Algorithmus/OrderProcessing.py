@@ -51,19 +51,35 @@ def getStorageCosts(matID):
             storageCosts = ms.costsPerUnit
     return storageCosts
 
+def getMaterialCosts(matID):
+    for ms in MaterialRessources.materials:
+        if ms.material_ID == matID:
+            materialCosts = ms.pricePerUnit
+    return materialCosts
+
 def optimizedOrderAmount(x,matID,m,orderCosts):
-    storageCosts = 0
-    return orderCosts/(getStorageCosts(matID)*(m+x))
+    #return orderCosts/(getStorageCosts(matID)*(m+x))
+    #return math.sqrt((2*m*orderCosts)/(getStorageCosts(matID)*getMaterialCosts(matID)))
+    return getStorageCosts(matID)*x + orderCosts/x
 
 def calloptOrderAmount(narr,orderCosts):
     i = 0
     while i < narr.size/2:
-        opt = minimize(optimizedOrderAmount, 200, args=(narr[0][i],narr[1][i], orderCosts))
+        opt = minimize(optimizedOrderAmount, 20, args=(narr[0][i],narr[1][i], orderCosts),bounds=[(0, 1000)])
         fun = math.ceil(opt.fun)
-        res = orderCosts/fun*getStorageCosts(narr[0][i])
-        if res < narr[1][i]:        # if optimum smaller than needed amount, res = needed amount
-            res = narr[1][i]
-        print("Optimized Order Amount for Material with ID", narr[0][i], "is:", res)
+        frequency = narr[1][i]/fun
+        #frequency = math.ceil(frequency)
+        #res = orderCosts/fun*getStorageCosts(narr[0][i])
+        print("Optimized Order Amount for Material with ID", narr[0][i], "is:", fun,"with the order frequency:", frequency)
         i += 1
+
+def optimizedOrder(x):
+    x1 = x[0]
+    x2 = x[1]
+    x3 = x[2]
+    return 100*x1+40*x2+60*x3
+x0 = [170,90, 120]
+opt = minimize(optimizedOrder, x0)
+print(opt)
 
 calloptOrderAmount(materialPlanning(b1), 200)

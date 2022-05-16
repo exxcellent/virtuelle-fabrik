@@ -1,6 +1,8 @@
 from scipy.optimize import minimize
 import math
 import numpy as np
+import Product
+import MaterialRessources
 
 class Batch(object):
 
@@ -25,16 +27,16 @@ def materialPlanning(batch):
     recipeID = 0
     matList = []
     matAmountList = []
-    for rec in recipes:
+    for rec in Product.recipes:
         if batch.product_ID == rec.product_ID:
             recipeID = rec.recipe_ID
-    for mat in matRequirements:
+    for mat in MaterialRessources.matRequirements:
         if mat.recipe_ID == recipeID:
             matList.append(mat.material_ID)
             matAmountList.append(mat.requiredQuantities*batch.productCount)
     for mat in matList:             # for Loop for reqMaterial-stock
         counter +=1
-        for s in materialStorages:
+        for s in MaterialRessources.materialStorages:
             if mat == s.material_ID:
                 matAmountList[counter-1] -= s.stock
     narr = np.array([matList, matAmountList])
@@ -45,15 +47,15 @@ print("Product ID and Amount:", "\n",materialPlanning(b1))
 #https://www.microtech.de/blog/optimale-bestellmenge
 def optimizedOrderAmount(x,matID,m,orderCosts):
     storageCosts = 0
-    for ms in materialStorages:
+    for ms in MaterialRessources.materialStorages:
         if ms.material_ID == matID:
             storageCosts = ms.costsPerUnit
-    return math.sqrt((2*m*orderCosts)/(storageCosts))
+    return orderCosts/(storageCosts*(m+x))
 
 def calloptOrderAmount(narr):
     i = 0
     while i < narr.size/2:
-        opt = minimize(optimizedOrderAmount, 1, args=(narr[0][i],narr[1][i], 200))
+        opt = minimize(optimizedOrderAmount, 200, args=(narr[0][i],narr[1][i], 5000))
         res = math.ceil(opt.fun)
         if res < narr[1][i]:        # if optimum smaller than needed amount, res = needed amount
             res = narr[1][i]

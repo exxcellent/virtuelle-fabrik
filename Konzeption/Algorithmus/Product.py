@@ -23,7 +23,7 @@ class Recipe(object):
 
 class Step(object):
 
-    def __init__(self, step_ID, name):
+    def __init__(self, step_ID : int, name):
         self.step_ID = step_ID
         self.name = name
 

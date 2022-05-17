@@ -1,9 +1,10 @@
 class Material(object):
 
-    def __init__(self, material_ID, materialName, pricePerUnit):
+    def __init__(self, material_ID, materialName, pricePerUnit, orderCosts):
         self.material_ID = material_ID
         self.materialName = materialName
         self.pricePerUnit = pricePerUnit
+        self.orderCosts = orderCosts
 
 class MaterialRequirements(object):
 
@@ -22,8 +23,8 @@ class MaterialStorage(object):
         self.costsPerUnit = costsPerUnit
 
 materials =[
-    Material(material_ID=1, materialName="glass", pricePerUnit=0.2),
-    Material(2, "water", 0.1),
+    Material(material_ID=1, materialName="glass", pricePerUnit=0.2, orderCosts=500),
+    Material(2, "water", 0.1, 100),
 ]
 
 materialStorages = [

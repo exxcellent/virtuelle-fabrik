@@ -1,3 +1,5 @@
+import Product
+
 class Station(object):
 
     def __init__(self, station_ID, employeeCapacity):
@@ -6,12 +8,12 @@ class Station(object):
 
 class Machine(object):
 
-    def __init__(self, machine_ID, station_ID, setupTime, costsPerMinute, finished, employeeCapacity,
-                minimumNumberOfEmployees, probabilityOfDefault):
+    def __init__(self, machine_ID, station_ID, setupTime, costsPerTimeUnit, finished, employeeCapacity,
+                 minimumNumberOfEmployees, probabilityOfDefault):
         self.machine_ID = machine_ID
         self.station_ID = station_ID
         self.setupTime = setupTime
-        self.costsPerMinute = costsPerMinute
+        self.costsPerTimeUnit = costsPerTimeUnit
         self.finished = finished
         self.employeeCapacity = employeeCapacity
         self.minimumNumberOfEmployees = minimumNumberOfEmployees
@@ -44,7 +46,7 @@ stations = [
 ]
 
 machines = [
-    Machine(machine_ID=1,station_ID=1, setupTime=0, costsPerMinute=5.0, finished='false', employeeCapacity=5,
+    Machine(machine_ID=1, station_ID=1, setupTime=0, costsPerTimeUnit=5.0, finished='false', employeeCapacity=5,
             minimumNumberOfEmployees=3, probabilityOfDefault=0.01),
     Machine(2, 1, 0, 7.0, 'false', 7, 5, 0.005),
     Machine(3, 1, 0, 4.0, 'false', 3, 2, 0.02),
@@ -62,7 +64,7 @@ machineCapabilities = [
     MachineCapability(6,3,2),                                   #2
 ]
 
-def machineSort(recipe: Recipe):
+def machineSort(recipe):
     machineList = []
     counter = None
     stepList = []
@@ -79,4 +81,4 @@ def machineSort(recipe: Recipe):
     for m in machineList:
         print("Machine ID:" ,m.machine_ID , ", Step ID:" , m.step_ID)
 
-#machineSort(recipe1)
+#machineSort(Product.recipes[0])

@@ -99,6 +99,8 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
 
 
 def create_total_costs_estimator(recipe, machine_list: List[Machine], employee_list: list):
+    machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
+    
     def total_costs(x: List[float]):
         # loop over machines and add up all costs and scale with usage times x
         # loop over all employees and add up all costs
@@ -115,9 +117,16 @@ def create_costs_per_product_estimator(recipe, machine_list):
 
     return costs_per_product
 
+machine_list = [Machine 2, machine 1]
 
-minimize(costs_per_product, x0=[1,1,1,1,1])
+costs_per_product = create_costs_per_product_estimator(recipe, machine_list)
 
+[1, 1]
+minimize(costs_per_product, x0=[1 for m in machine_list])
+
+costs_per_product(x0) = 10.0
+x0 -> x0_2
+costs_per_product(x0_2) = 9.2
 
 optimizeFrequency(Product.recipes[0])
 print(getStepList(Product.recipes[0]))

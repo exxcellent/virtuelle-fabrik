@@ -18,6 +18,7 @@ def getStepList(recipe):
     sl.append(counter)
     return sl
 
+
 def getMachineList(recipe):
     ml = []
     for s in recipe.steps:
@@ -53,6 +54,9 @@ def optimizeFrequency(recipe):
         while(x < s):
             print("Machine ID:",machineList[i].machine_ID,", Step Ability:", machineList[i].step_ID,
             ", Frequency:",machineList[i].clockRate,", Costs per time unit:", getCostsPerMinute(machineList[i].machine_ID))
+            #functionStepx += machineList[i].clockRate*x
+            #funStep1 = machineList[0].clockRate*x + machineList[1].clockRate*x  + machineList[2].clockRate*x
+            #funStep2 = machineList[3].clockRate*x + machineList[4].clockRate*x
             i+=1
             x+=1
 

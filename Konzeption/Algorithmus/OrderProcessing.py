@@ -63,11 +63,6 @@ def getBaseOrderCosts(matID):
             orderCosts = ms.orderCosts
             return orderCosts
 
-#def optimizedOrderAmount(x,matID,m,orderCosts):
-    #return orderCosts/(getStorageCosts(matID)*(m+x))
-    #return math.sqrt((2*m*orderCosts)/(getStorageCosts(matID)*getMaterialCosts(matID)))
-#   return getStorageCosts(matID)*x + orderCosts/x
-
 def optimizedOrderAmount(x, orderAmount, storageCosts, orderCosts):
     print(orderCosts(x))
     return storageCosts*x + (orderCosts(x) * orderAmount/x)
@@ -88,16 +83,6 @@ def calloptOrderAmount(narr):
         print("Optimized Order Amount for Material with ID", narr[0][i], "is:", x,"with the order frequency:", frequency)
         i += 1
 
-#def calloptOrderAmount(narr,orderCosts):
-#    i = 0
- #   while i < narr.size/2:
- #       opt = minimize(optimizedOrderAmount, 20, args=(narr[0][i],narr[1][i], orderCosts),bounds=[(0, 1000)])
- #       fun = math.ceil(opt.fun)
- #       frequency = narr[1][i]/fun
-  #      #frequency = math.ceil(frequency)
-  #      #res = orderCosts/fun*getStorageCosts(narr[0][i])
-  #      print("Optimized Order Amount for Material with ID", narr[0][i], "is:", fun,"with the order frequency:", frequency)
-   #     i += 1
 
 def optimizedOrder(x):
     x1 = x[0]

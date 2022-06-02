@@ -48,9 +48,9 @@ stations = [
 machines = [
     Machine(machine_ID=1, station_ID=1, setupTime=0, costsPerTimeUnit=5.0, finished='false', employeeCapacity=5,
             minimumNumberOfEmployees=3, probabilityOfDefault=0.01),
-  #  Machine(2, 1, 0, 7.0, 'false', 7, 5, 0.005),
-  #  Machine(3, 1, 0, 4.0, 'false', 3, 2, 0.02),
-#    Machine(4, 2, 0, 4.0, 'false', 5, 3, 0.01),
+    Machine(2, 1, 0, 7.0, 'false', 7, 5, 0.005),
+    Machine(3, 1, 0, 4.0, 'false', 3, 2, 0.02),
+    Machine(4, 2, 0, 4.0, 'false', 5, 3, 0.01),
     Machine(5, 2, 0, 5.0, 'false', 7, 3, 0.008),
  #   Machine(6, 2, 0, 6.0, 'false', 2, 1, 0.018),
 ]
@@ -58,10 +58,10 @@ machines = [
 
 machineCapabilities = [
     MachineCapability(machine_ID=1,step_ID=1,clockRate=5),      #1
- #   MachineCapability(2,2,7),                                   #2
- #   MachineCapability(3,1,3),                                   #1
- #   MachineCapability(4,1,5),                                   #1
-    MachineCapability(5,2,10),                                   #2
+    MachineCapability(2,2,5),                                   #2
+    MachineCapability(3,1,7),                                   #1
+    MachineCapability(4,1,6),                                   #1
+    MachineCapability(5,2,5),                                   #2
  #   MachineCapability(6,3,2),                                   #2
 ]
 

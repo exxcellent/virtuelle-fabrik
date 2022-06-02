@@ -8,7 +8,6 @@ import WorkingRessources
 from typing import List, Dict
 from WorkingRessources import Machine
 
-
 def getStepList(recipe):
     counter = None
     sl = []
@@ -22,7 +21,6 @@ def getStepList(recipe):
     sl.append(counter)
     return sl
 
-
 def getMachineList(recipe):
     ml = []
     for s in recipe.steps:
@@ -30,7 +28,6 @@ def getMachineList(recipe):
             if s.step_ID == m.step_ID:
                 ml.append(m)
     return ml
-
 
 # 1 -> [machine1, machine3]
 # 2 -> [machine2, machine4]
@@ -47,28 +44,23 @@ def getRecipeStepToMachineListMapping(recipe) -> Dict[int, List[Machine]]:
                     ml[s.step_ID] = [m]
     return ml
 
-
 def stepAmount(recipe):
     return len(recipe.steps)
-
 
 def getFrequency(mID):
     for m in WorkingRessources.machineCapabilities:
         if mID == m.machine_ID:
             return m.clockRate
 
-
 def getStepAbility(mID):
     for m in WorkingRessources.machineCapabilities:
         if mID == m.machine_ID:
             return m.step_ID
 
-
 def getCostsPerMinute(mID):
     for m in WorkingRessources.machines:
         if mID == m.machine_ID:
             return m.costsPerTimeUnit
-
 
 def optimizeFrequency(recipe):
     machineList = getMachineList(recipe)
@@ -94,7 +86,6 @@ def optimizeFrequency(recipe):
     #print(lowfreq)
     return lowfreq
 
-
 def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
     machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
 
@@ -110,19 +101,17 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
     print(production_frequency)
     return production_frequency
 
-def create_total_costs_estimator(recipe, machine_list: List[Machine]):      #, employee_list: list
+def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
 
     def total_costs(x: List[float]):
         totCosts = 0
         for i, m in enumerate(machine_list):
-            totCosts += getCostsPerMinute(m.machine_ID)* x[i] + 1
+            totCosts += getCostsPerMinute(m.machine_ID)* x[i]
         # loop over machines and add up all costs and scale with usage times x
-        # loop over all employees and add up all costs
         return totCosts
 
     return total_costs
-
 
 def create_costs_per_product_estimator(recipe, machine_list):
     production_frequency = create_production_frequency_estimator(recipe, machine_list)
@@ -133,18 +122,29 @@ def create_costs_per_product_estimator(recipe, machine_list):
 
     return costs_per_product
 
-#machine_list = [Machine 2, machine 1]
+def getBounds(recipe):
+    l = len(getMachineList(recipe))
+    i = 0
+    bounds = []
+    while i < l:
+        bounds.append((1e-6,1))
+        i+=1
+    return bounds
+
 machine_list = getMachineList(Product.recipes[0])
-#machine_list = getRecipeStepToMachineListMapping(Product.recipes[0])
-
 costs_per_product = create_costs_per_product_estimator(Product.recipes[0], machine_list)
-
-[1, 1]
-opt = minimize(costs_per_product, x0=[0.5 for m in machine_list],bounds = [(1e-6,1),(1e-6,1)])
+bounds = getBounds(Product.recipes[0])
+opt = minimize(costs_per_product, x0=[1 for m in machine_list],bounds=bounds)
 print(opt)
 
-#costs_per_product(x0) = 10.0
-#x0 -> x0_2
-#costs_per_product(x0_2) = 9.2
+arr = opt.x
+sum = 0
+sum2 = 0
+for i, m in enumerate(machine_list):
+    if i < 3:
+        sum += m.clockRate*arr[i]
+    else:
+        sum2 += m.clockRate*arr[i]
+print("Frequency for Step 1:",sum, "\n""Frequency for Step 2:", sum2)
 
 optimizeFrequency(Product.recipes[0])

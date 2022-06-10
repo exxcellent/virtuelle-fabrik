@@ -1,0 +1,7 @@
+version: "3"
+
+services:
+  fabrik-api:
+    build: .
+    ports:
+      - 80:80

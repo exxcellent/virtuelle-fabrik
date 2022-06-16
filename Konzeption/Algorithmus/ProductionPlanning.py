@@ -1,6 +1,5 @@
 import scipy
 from scipy.optimize import minimize
-import math
 import numpy as np
 import Product
 import MaterialRessources

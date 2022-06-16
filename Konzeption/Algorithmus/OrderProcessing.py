@@ -64,7 +64,6 @@ def getBaseOrderCosts(matID):
             return orderCosts
 
 def optimizedOrderAmount(x, orderAmount, storageCosts, orderCosts):
-    print(orderCosts(x))
     return storageCosts*x + (orderCosts(x) * orderAmount/x)
 
 def createOrderCostsFunction(order_base_price, price_per_unit, max_rebate, rebate_const = 1.0):
@@ -84,12 +83,7 @@ def calloptOrderAmount(narr):
         i += 1
 
 
-def optimizedOrder(x):
-    x1 = x[0]
-    x2 = x[1]
-    x3 = x[2]
-    return 100*x1+40*x2+60*x3
-x0 = [170,90, 120]
+
 #opt = minimize(optimizedOrder, x0)
 #print(opt)
 

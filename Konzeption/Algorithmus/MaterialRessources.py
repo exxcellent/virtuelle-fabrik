@@ -1,6 +1,6 @@
 class Material(object):
 
-    def init(self, material_ID, materialName, pricePerUnit, orderCosts):
+    def __init__(self, material_ID, materialName, pricePerUnit, orderCosts):
         self.material_ID = material_ID
         self.materialName = materialName
         self.pricePerUnit = pricePerUnit
@@ -8,14 +8,14 @@ class Material(object):
 
 class MaterialRequirements(object):
 
-    def init(self, recipe_ID, material_ID, requiredQuantities):
+    def __init__(self, recipe_ID, material_ID, requiredQuantities):
         self.recipe_ID = recipe_ID
         self.material_ID = material_ID
         self.requiredQuantities = requiredQuantities
 
 class MaterialStorage(object):
 
-    def init(self, material_ID, stock, stockReserved, stockUp, costsPerUnit):
+    def __init__(self, material_ID, stock, stockReserved, stockUp, costsPerUnit):
         self.material_ID = material_ID
         self.stock = stock
         self.stockReserved = stockReserved

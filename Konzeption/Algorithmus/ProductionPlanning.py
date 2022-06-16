@@ -107,7 +107,7 @@ def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     def total_costs(x: List[float]):
         totCosts = 0
         for i, m in enumerate(machine_list):
-            totCosts += getCostsPerMinute(m.machine_ID)* x[i] + 1
+            totCosts += getCostsPerMinute(m.machine_ID)* x[i]
         # loop over machines and add up all costs and scale with usage times x
         return totCosts
 
@@ -137,6 +137,14 @@ bounds = getBounds(Product.recipes[0])
 opt = minimize(costs_per_product, x0=[1 for m in machine_list],bounds=bounds)
 print(opt)
 
-
+arr = opt.x
+sum = 0
+sum2 = 0
+for i, m in enumerate(machine_list):
+    if i < 3:
+        sum += m.clockRate*arr[i]
+    else:
+        sum2 += m.clockRate*arr[i]
+print("Frequency for Step 1:",sum, "\n""Frequency for Step 2:", sum2)
 
 optimizeFrequency(Product.recipes[0])

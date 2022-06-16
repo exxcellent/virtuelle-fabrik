@@ -16,14 +16,14 @@ class ProductStorage(object):
 
 class Recipe(object):
 
-    def __init__(self, recipe_ID, steps, product_ID):
+    def __init__(self, recipe_ID: int, steps: int, product_ID: int):
         self.recipe_ID = recipe_ID
         self.steps = steps
         self.product_ID = product_ID
 
 class Step(object):
 
-    def __init__(self, step_ID : int, name):
+    def __init__(self, step_ID: int, name):
         self.step_ID = step_ID
         self.name = name
 

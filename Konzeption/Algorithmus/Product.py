@@ -1,6 +1,6 @@
 
 class Product(object):
-    """defines the product attributes
+    """This constructor defines the product attributes
 
     :param product_ID: primary Key
     :type product_ID: int
@@ -19,9 +19,7 @@ class Product(object):
 
 
 class ProductStorage(object):
-    def __init__(self, stock: int, capacity: int, output: int, product_ID: int, costsPerUnit: float):
-        """This class represents how much of each product is currently stored in the warehouse
-
+    """This constructor represents how much of each product is currently stored in the warehouse
         :param stock: stock count
         :type stock: int
         :param capacity: maximum capacity, which can be stored
@@ -33,13 +31,15 @@ class ProductStorage(object):
         :param costsPerUnit: storage costs of the product per time unit
         :type costsPerUnit: float
         """
+    def __init__(self, stock: int, capacity: int, output: int, product_ID: int, costsPerUnit: float):
+
         self.stock = stock
         self.capacity = capacity
         self.output = output
         self.product_ID = product_ID
         self.costsPerUnit = costsPerUnit
 
-# defines the recipe attributes, for example the steps, which are required to execute
+# This constructor defines the recipe attributes, for example the steps, which are required to execute
 class Recipe(object):
     def __init__(self, recipe_ID: int, name: str, steps, product_ID: int):
         self.recipe_ID = recipe_ID

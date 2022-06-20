@@ -20,6 +20,7 @@ class Product(object):
 
 class ProductStorage(object):
     """This constructor represents the storage situation of a product
+
     :param stock: stock count
     :type stock: int
     :param capacity: maximum capacity, which can be stored

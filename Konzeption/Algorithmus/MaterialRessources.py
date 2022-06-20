@@ -1,23 +1,53 @@
-#Each material has an ID, a name and a purchase price per unit.
-# In addition, order costs are incurred differently for each material
+
 class Material(object):
+    """This constructor shows the important attributes of each material
+
+        :param material_ID: primary Key
+        :type material_ID: int
+        :param materialName: name of the material
+        :type materialName: str
+        :param pricePerUnit: prices of each material
+        :type pricePerUnit: float
+        :param orderCosts: costs of the order
+        :type orderCosts: float
+    """
     def __init__(self, material_ID: int, materialName: str, pricePerUnit: float, orderCosts: float):
         self.material_ID = material_ID
         self.materialName = materialName
         self.pricePerUnit = pricePerUnit
         self.orderCosts = orderCosts
 
-# This is an intermediate class that defines how many units of material
-# the respective recipe requires to produce a product.
+
 class MaterialRequirements(object):
+    """ This constructor defines how many units of material the respective recipe requires to produce a product
+
+        :param recipe_ID: primary Key
+        :type recipe_ID: int
+        :param material_ID: foreign Key
+        :type material_ID: int
+        :param requiredQuantities: requirements of each material
+        :type requiredQuantities: int
+    """
     def __init__(self, recipe_ID: int, material_ID: int, requiredQuantities: int):
         self.recipe_ID = recipe_ID
         self.material_ID = material_ID
         self.requiredQuantities = requiredQuantities
 
-# This class represents how much of each material is currently stored in the warehouse
-# The reservedStock stands for materials which are already in a production queue
+
 class MaterialStorage(object):
+    """This constructor represents how much of each material is currently stored in the warehouse
+
+        :param material_ID: primary Key
+        :type material_ID: int
+        :param stock: currently in the warehouse
+        :type stock: int
+        :param stockReserved: products which are already in a production queue
+        :type stockReserved: int
+        :param stockUp: increase of materials per time unit
+        :type stockUp: int
+        :param costsPerUnit: costs of the production
+        :type costsPerUnit: float
+    """
     def __init__(self, material_ID: int, stock: int, stockReserved: int, stockUp: int, costsPerUnit: float):
         self.material_ID = material_ID
         self.stock = stock

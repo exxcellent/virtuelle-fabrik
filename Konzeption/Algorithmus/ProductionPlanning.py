@@ -9,7 +9,6 @@ def getStepList(recipe):
 
     :param recipe: Recipe object, which stores the required steps
     :type recipe: object
-
     :return: Returns a List of steps
     :rtype: list
     """
@@ -30,7 +29,6 @@ def getMachineList(recipe):
 
     :param recipe: Recipe object, which stores the required steps
     :type recipe: object
-
     :return: Returns a List of machines
     :rtype: list
     """
@@ -46,12 +44,11 @@ def getMachineList(recipe):
 def getRecipeStepToMachineListMapping(recipe) -> Dict[int, List[Machine]]:
     """This function is mapping the individual machines to the fitting recipe steps
 
-      :param recipe: Recipe object, which stores the required steps
-      :type recipe: object
-
-      :return: Returns a dictionary
-      :rtype: dict
-      """
+    :param recipe: Recipe object, which stores the required steps
+    :type recipe: object
+    :return: Returns a dictionary
+    :rtype: dict
+    """
     ml = dict()
     for s in recipe.steps:
         for m in WorkingRessources.machineCapabilities:
@@ -66,22 +63,20 @@ def getRecipeStepToMachineListMapping(recipe) -> Dict[int, List[Machine]]:
 def stepAmount(recipe):
     """This function returns the amount of steps in a recipe
 
-      :param recipe: Recipe object, which stores the required steps
-      :type recipe: object
-
-      :return: Returns the amount of steps
-      :rtype: int
+    :param recipe: Recipe object, which stores the required steps
+    :type recipe: object
+    :return: Returns the amount of steps
+    :rtype: int
     """
     return len(recipe.steps)
 
 def getFrequency(mID):
     """This is a getter function for the clock rate of a machine
 
-      :param mID: Machine ID, which is needed to get the fitting clock rate
-      :type mID: int
-
-      :return: Returns the clock rate
-      :rtype: float
+    :param mID: Machine ID, which is needed to get the fitting clock rate
+    :type mID: int
+    :return: Returns the clock rate
+    :rtype: float
     """
     for m in WorkingRessources.machineCapabilities:
         if mID == m.machine_ID:
@@ -90,11 +85,10 @@ def getFrequency(mID):
 def getStepAbility(mID):
     """This is a getter function for the step ability of a machine
 
-          :param mID: Machine ID, which is needed to get the fitting step ability
-          :type mID: int
-
-          :return: Returns the step ID, which the machine is able to execute
-          :rtype: int
+    :param mID: Machine ID, which is needed to get the fitting step ability
+    :type mID: int
+    :return: Returns the step ID, which the machine is able to execute
+    :rtype: int
     """
     for m in WorkingRessources.machineCapabilities:
         if mID == m.machine_ID:
@@ -103,11 +97,10 @@ def getStepAbility(mID):
 def getCostsPerTimeUnit(mID):
     """This is a getter function for the costs per minute of a machine
 
-          :param mID: Machine ID, which is needed to get the fitting costs per minute
-          :type mID: int
-
-          :return: Returns the costs per time unit
-          :rtype: float
+    :param mID: Machine ID, which is needed to get the fitting costs per minute
+    :type mID: int
+    :return: Returns the costs per time unit
+    :rtype: float
     """
     for m in WorkingRessources.machines:
         if mID == m.machine_ID:
@@ -116,10 +109,10 @@ def getCostsPerTimeUnit(mID):
 def getMachineCapabilities(recipe, arr):
     """This function lists all machines which could be taken in account for the optimization of frequency and costs
 
-        :param recipe: Recipe object, which stores the required steps
-        :type recipe: object
-        :param arr: Inputs a list of capacity utilisation (a result of the frequency and costs optimization) for the machines
-        :type arr: list
+    :param recipe: Recipe object, which stores the required steps
+    :type recipe: object
+    :param arr: Inputs a list of capacity utilisation (a result of the frequency and costs optimization) for the machines
+    :type arr: list
     """
     machineList = getMachineList(recipe)
     stepList = getStepList(recipe)
@@ -141,10 +134,10 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
         """This function calculates the maximum frequency for each step. The step with the lowest frequency will decide
         the overall frequency for the production
 
-            :param x: Inputs a list of starting values for the capacity utilisation of a machine
-            :type x: list
-            :return: Returns the overall production frequency
-            :rtype: float
+        :param x: Inputs a list of starting values for the capacity utilisation of a machine
+        :type x: list
+        :return: Returns the overall production frequency
+        :rtype: float
         """
         current_lowest_frequency = 1000
         for step_id, machine_list in getRecipeStepToMachineListMapping(recipe).items():
@@ -163,10 +156,10 @@ def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     def total_costs(x: List[float]):
         """This function calculates the total machine costs per time unit
 
-            :param x: Inputs a list of starting values for the capacity utilisation of a machine
-            :type x: list
-            :return: Returns total costs per timeunit
-            :rtype: float
+        :param x: Inputs a list of starting values for the capacity utilisation of a machine
+        :type x: list
+        :return: Returns total costs per timeunit
+        :rtype: float
         """
         totCosts = 0
         for i, m in enumerate(machine_list):
@@ -183,10 +176,10 @@ def create_costs_per_product_estimator(recipe, machine_list):
     def costs_per_product(x: List[float]):
         """This function calculates the costs per product
 
-            :param x: Inputs a list of starting values
-            :type x: list
-            :return: Returns costs per product
-            :rtype: float
+        :param x: Inputs a list of starting values
+        :type x: list
+        :return: Returns costs per product
+        :rtype: float
         """
         return total_costs(x) / production_frequency(x)
 
@@ -195,10 +188,10 @@ def create_costs_per_product_estimator(recipe, machine_list):
 def getBounds(recipe):
     """This function creates the bounds for the optimization in a generic way
 
-        :param recipe: Recipe object
-        :type recipe: object
-        :return: Returns the bounds
-        :rtype: list
+    :param recipe: Recipe object
+    :type recipe: object
+    :return: Returns the bounds
+    :rtype: list
     """
     l = len(getMachineList(recipe))
     i = 0

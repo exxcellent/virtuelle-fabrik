@@ -20,17 +20,17 @@ class Product(object):
 
 class ProductStorage(object):
     """This constructor represents the storage situation of a product
-        :param stock: stock count
-        :type stock: int
-        :param capacity: maximum capacity, which can be stored
-        :type capacity: int
-        :param output: product output per time unit due to shipping
-        :type output: int
-        :param product_ID: product ID, which is stored
-        :type product_ID: int
-        :param costsPerUnit: storage costs of the product per time unit
-        :type costsPerUnit: float
-        """
+    :param stock: stock count
+    :type stock: int
+    :param capacity: maximum capacity, which can be stored
+    :type capacity: int
+    :param output: product output per time unit due to shipping
+    :type output: int
+    :param product_ID: product ID, which is stored
+    :type product_ID: int
+    :param costsPerUnit: storage costs of the product per time unit
+    :type costsPerUnit: float
+    """
     def __init__(self, stock: int, capacity: int, output: int, product_ID: int, costsPerUnit: float):
 
         self.stock = stock
@@ -43,15 +43,15 @@ class ProductStorage(object):
 class Recipe(object):
     """This constructor defines the recipe attributes
 
-        :param recipe_ID: primary Key
-        :type recipe_ID: int
-        :param name: name of the product, which can be produced
-        :type name: str
-        :param steps: a list of steps, which needs to be executed to receive the product
-        :type steps: list
-        :param product_ID: points to the product, which can be produced
-        :type product_ID: int
-        """
+    :param recipe_ID: primary Key
+    :type recipe_ID: int
+    :param name: name of the product, which can be produced
+    :type name: str
+    :param steps: a list of steps, which needs to be executed to receive the product
+    :type steps: list
+    :param product_ID: points to the product, which can be produced
+    :type product_ID: int
+    """
     def __init__(self, recipe_ID: int, name: str, steps , product_ID: int):
         self.recipe_ID = recipe_ID
         self.name = name
@@ -61,11 +61,11 @@ class Recipe(object):
 class Step(object):
     """This constructor defines the ID and name of steps
 
-            :param step_ID: primary Key
-            :type step_ID: int
-            :param name: name of the step
-            :type name: str
-            """
+    :param step_ID: primary Key
+    :type step_ID: int
+    :param name: name of the step
+    :type name: str
+    """
     def __init__(self, step_ID: int, name: str):
         self.step_ID = step_ID
         self.name = name

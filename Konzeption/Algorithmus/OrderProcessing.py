@@ -7,16 +7,16 @@ import MaterialRessources
 class Batch(object):
     """This constructor describes all needed details about an order
 
-        :param product_ID: primary Key
-        :type product_ID: int
-        :param productCount: amount of the product, which is desired
-        :type productCount: int
-        :param produced: already produced products
-        :type produced: int
-        :param finished: decides if the batch is either finished or in progress
-        :type finished: int
-        :param priority: priority of the order
-        :type priority: int
+    :param product_ID: primary Key
+    :type product_ID: int
+    :param productCount: amount of the product, which is desired
+    :type productCount: int
+    :param produced: already produced products
+    :type produced: int
+    :param finished: decides if the batch is either finished or in progress
+    :type finished: int
+    :param priority: priority of the order
+    :type priority: int
     """
     def __init__(self, product_ID, productCount, produced, finished, priority):
         self.product_ID = product_ID
@@ -28,13 +28,13 @@ class Batch(object):
 class Scheduling(object):
     """This constructor describes how the batch is scheduled
 
-            :param batch_ID: primary Key
-            :type batch_ID: int
-            :param station_ID: foreign Key
-            :type station_ID: int
-            :param employee_ID: foreign Key
-            :type employee_ID: int
-        """
+    :param batch_ID: primary Key
+    :type batch_ID: int
+    :param station_ID: foreign Key
+    :type station_ID: int
+    :param employee_ID: foreign Key
+    :type employee_ID: int
+    """
     def __init__(self, batch_ID, station_ID, employee_ID):
         self.batch_ID = batch_ID
         self.station_ID = station_ID
@@ -45,10 +45,10 @@ b1 = Batch(product_ID=1, productCount=100, produced=0, finished='false', priorit
 def materialPlanning(batch):
     """This function calculates the total material needs of an order and takes the storage stock into account
 
-        :param batch: Inputs a Object of batch, which has all informations about a specific order
-        :type batch: object
-        :return: Returns a numpy array with 2 dimensions (material IDs and material amounts)
-        :rtype: numpy
+    :param batch: Inputs a Object of batch, which has all informations about a specific order
+    :type batch: object
+    :return: Returns a numpy array with 2 dimensions (material IDs and material amounts)
+    :rtype: numpy
     """
     counter = 0
     recipeID = 0
@@ -74,11 +74,10 @@ print("Product ID and Amount:", "\n",materialPlanning(b1))
 def getStorageCosts(matID):
     """This is a getter function for the storage costs per material
 
-      :param matID: Material ID, which is needed to get the fitting storage costs
-      :type matID: int
-
-      :return: Returns the storage costs per material
-      :rtype: float
+    :param matID: Material ID, which is needed to get the fitting storage costs
+    :type matID: int
+    :return: Returns the storage costs per material
+    :rtype: float
     """
     for ms in MaterialRessources.materialStorages:
         if ms.material_ID == matID:
@@ -88,11 +87,10 @@ def getStorageCosts(matID):
 def getMaterialCosts(matID):
     """This is a getter function for the material costs
 
-      :param matID: Material ID, which is needed to get the fitting material costs
-      :type matID: int
-
-      :return: Returns the material costs
-      :rtype: float
+    :param matID: Material ID, which is needed to get the fitting material costs
+    :type matID: int
+    :return: Returns the material costs
+    :rtype: float
     """
     for ms in MaterialRessources.materials:
         if ms.material_ID == matID:
@@ -102,11 +100,10 @@ def getMaterialCosts(matID):
 def getBaseOrderCosts(matID):
     """This is a getter function for the base order costs for a specific material ID
 
-      :param matID: Material ID, which is needed to get the fitting base order costs
-      :type matID: int
-
-      :return: Returns the order costs
-      :rtype: float
+    :param matID: Material ID, which is needed to get the fitting base order costs
+    :type matID: int
+    :return: Returns the order costs
+    :rtype: float
     """
     for ms in MaterialRessources.materials:
         if ms.material_ID == matID:
@@ -116,17 +113,16 @@ def getBaseOrderCosts(matID):
 def optimizedOrderAmount(x, orderAmount, storageCosts, orderCosts):
     """This function calculates the order costs with a quantity discount
 
-        :param x: Inputs a starting value for material amount
-        :type x: int
-        :param orderAmount: Inputs the needed material amount
-        :type orderAmount: int
-        :param storageCosts: Inputs the storage costs for the specific material
-        :type storageCosts: float
-        :param orderCosts: Inputs the orderCosts
-        :type orderCosts: float
-
-        :return: Returns optimized order amount
-        :rtype: float
+    :param x: Inputs a starting value for material amount
+    :type x: int
+    :param orderAmount: Inputs the needed material amount
+    :type orderAmount: int
+    :param storageCosts: Inputs the storage costs for the specific material
+    :type storageCosts: float
+    :param orderCosts: Inputs the orderCosts
+    :type orderCosts: float
+    :return: Returns optimized order amount
+    :rtype: float
     """
     return storageCosts*x + (orderCosts(x) * orderAmount/x)
 
@@ -134,10 +130,10 @@ def createOrderCostsFunction(order_base_price, price_per_unit, max_rebate, rebat
     def orderCosts(x):
         """This function calculates the order costs with a quantity discount
 
-            :param x: Inputs a starting value for material amount
-            :type x: int
-            :return: Returns the order costs
-            :rtype: float
+        :param x: Inputs a starting value for material amount
+        :type x: int
+        :return: Returns the order costs
+        :rtype: float
         """
         return order_base_price + (price_per_unit * (1 - max_rebate * (1 - math.exp(- rebate_const * x)))) * x
     return orderCosts
@@ -145,8 +141,8 @@ def createOrderCostsFunction(order_base_price, price_per_unit, max_rebate, rebat
 def calloptOrderAmount(narr):
     """This function is starting the optimization of the order amount
 
-        :param narr: Inputs a numpy array with the material IDs and their needed amount
-        :type narr: list
+    :param narr: Inputs a numpy array with the material IDs and their needed amount
+    :type narr: list
     """
     i = 0
     while i < narr.size/2:

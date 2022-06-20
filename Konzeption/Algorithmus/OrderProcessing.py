@@ -44,7 +44,6 @@ def materialPlanning(batch):
 
 print("Product ID and Amount:", "\n",materialPlanning(b1))
 
-#https://www.microtech.de/blog/optimale-bestellmenge
 def getStorageCosts(matID):
     for ms in MaterialRessources.materialStorages:
         if ms.material_ID == matID:
@@ -79,7 +78,7 @@ def calloptOrderAmount(narr):
         x = math.ceil(opt.x)
         frequency = narr[1][i]/x
         #frequency = math.ceil(frequency)
-        print("Optimized Order Amount for Material with ID", narr[0][i], "is:", x,"with the order frequency:", frequency)
+        print("Optimized Order Amount for Material with ID", narr[0][i], "is:", x,"with the order frequency:", round(frequency,0))
         i += 1
 
 

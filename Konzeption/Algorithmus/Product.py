@@ -1,29 +1,42 @@
-class Product(object):
+"""defines the product attributes
 
-    def __init__(self, product_ID, sellPrice, recipe_ID):
+:param product_ID: primary Key
+:type product_ID: int
+:param name: name of the product
+:type name: str
+:param sellPrice: selling price of product
+:type sellPrice: float
+:param recipe_ID: points to the recipe of the product
+:type recipe_ID: int
+"""
+class Product(object):
+    def __init__(self, product_ID: int, name: str, sellPrice: float, recipe_ID: int):
         self.product_ID = product_ID
+        self.name = name
         self.sellPrice = sellPrice
         self.recipe_ID = recipe_ID
 
+# This class represents how much of each product is currently stored in the warehouse
 class ProductStorage(object):
-
-    def __init__(self, stock, capacity, output, product_ID, costsPerUnit):
+    def __init__(self, stock: int, capacity: int, output: int, product_ID: int, costsPerUnit: float):
         self.stock = stock
         self.capacity = capacity
         self.output = output
         self.product_ID = product_ID
         self.costsPerUnit = costsPerUnit
 
+# defines the recipe attributes, for example the steps, which are required to execute
 class Recipe(object):
-
-    def __init__(self, recipe_ID: int, steps: int, product_ID: int):
+    def __init__(self, recipe_ID: int, name: str, steps, product_ID: int):
         self.recipe_ID = recipe_ID
+        self.name = name
         self.steps = steps
         self.product_ID = product_ID
 
+# defines the ID and name of steps
 class Step(object):
 
-    def __init__(self, step_ID: int, name):
+    def __init__(self, step_ID: int, name: str):
         self.step_ID = step_ID
         self.name = name
 
@@ -32,8 +45,8 @@ step1 = Step(step_ID=1, name="Producing bottle")
 step2 = Step(2, "Fill bottle with water")
 
 recipes = [
-    Recipe(recipe_ID=1, steps=[step1,step2], product_ID=1)
+    Recipe(recipe_ID=1, name="Wasserflasche", steps=[step1,step2], product_ID=1)
     ]
 
-product1 = Product(1, 2.0, 1)
+product1 = Product(product_ID=1, name="Wasserflasche", sellPrice=2.0, recipe_ID=1)
 

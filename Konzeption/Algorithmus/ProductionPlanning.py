@@ -1,8 +1,5 @@
-import scipy
 from scipy.optimize import minimize
-import numpy as np
 import Product
-import MaterialRessources
 import WorkingRessources
 from typing import List, Dict
 from WorkingRessources import Machine
@@ -61,7 +58,7 @@ def getCostsPerMinute(mID):
         if mID == m.machine_ID:
             return m.costsPerTimeUnit
 
-def optimizeFrequency(recipe):
+def getMachineCapabilities(recipe, arr):
     machineList = getMachineList(recipe)
     stepList = getStepList(recipe)
     i = 0
@@ -75,7 +72,7 @@ def optimizeFrequency(recipe):
             freq += machineList[i].clockRate
             print("Machine ID:", machineList[i].machine_ID, ", Step Ability:", machineList[i].step_ID,
                   ", Frequency:", machineList[i].clockRate, ", Costs per time unit:",
-                  getCostsPerMinute(machineList[i].machine_ID))
+                  getCostsPerMinute(machineList[i].machine_ID),"\033[1m", ", Capacity Utilisation:", round(arr[i],2), "\033[0;0m")
             i += 1
             x += 1
         if freq is not None:
@@ -106,7 +103,7 @@ def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     def total_costs(x: List[float]):
         totCosts = 0
         for i, m in enumerate(machine_list):
-            totCosts += getCostsPerMinute(m.machine_ID)* x[i]
+            totCosts += getCostsPerMinute(m.machine_ID)* x[i] +1        #little penalty with +1
         # loop over machines and add up all costs and scale with usage times x
         return totCosts
 
@@ -134,16 +131,7 @@ machine_list = getMachineList(Product.recipes[0])
 costs_per_product = create_costs_per_product_estimator(Product.recipes[0], machine_list)
 bounds = getBounds(Product.recipes[0])
 opt = minimize(costs_per_product, x0=[1 for m in machine_list],bounds=bounds)
-print(opt)
+print("\nCosts per product:","\033[1m",round(opt.fun,2), "monetary units", "\033[0;0m"
+      "\nThe capacity utilisation of the individual machines is:")
+getMachineCapabilities(Product.recipes[0], opt.x)
 
-arr = opt.x
-sum = 0
-sum2 = 0
-for i, m in enumerate(machine_list):
-    if i < 3:
-        sum += m.clockRate*arr[i]
-    else:
-        sum2 += m.clockRate*arr[i]
-print("Frequency for Step 1:",sum, "\n""Frequency for Step 2:", sum2)
-
-optimizeFrequency(Product.recipes[0])

@@ -131,10 +131,10 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
     """In this function, properties are passed with and so the other functions inside can then use these variables
     for the calculation of the production frequency
 
-    :param x: Inputs a recipe
-    :type x: object
-    :param x: Inputs a list of machines
-    :type x: list
+    :param recipe: Inputs a recipe
+    :type recipe: object
+    :param machine_list: Inputs a list of machines
+    :type machine_list: list
 
     :return: Returns the adjusted production frequency
     :rtype: float
@@ -165,10 +165,10 @@ def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     """In this function, properties are passed with and so the other functions inside can then use these variables
     for the calculation of the total costs
 
-    :param x: Inputs a recipe
-    :type x: object
-    :param x: Inputs a list of machines
-    :type x: list
+    :param recipe: Inputs a recipe
+    :type recipe: object
+    :param machine_list: Inputs a list of machines
+    :type machine_list: list
 
     :return: Returns the total costs
     :rtype: float
@@ -192,6 +192,17 @@ def create_total_costs_estimator(recipe, machine_list: List[Machine]):
     return total_costs
 
 def create_costs_per_product_estimator(recipe, machine_list):
+    """In this function, properties are passed with and so the other functions inside can then use these variables
+    for the calculation of the costs per product
+
+    :param recipe: Inputs a recipe
+    :type recipe: object
+    :param machine_list: Inputs a list of machines
+    :type machine_list: list
+
+    :return: Returns the costs per product
+    :rtype: float
+    """
     production_frequency = create_production_frequency_estimator(recipe, machine_list)
     total_costs = create_total_costs_estimator(recipe, machine_list)
 

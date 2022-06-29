@@ -127,6 +127,21 @@ def optimizedOrderAmount(x, orderAmount, storageCosts, orderCosts):
     return storageCosts*x + (orderCosts(x) * orderAmount/x)
 
 def createOrderCostsFunction(order_base_price, price_per_unit, max_rebate, rebate_const = 1.0):
+    """In this function, properties are passed with and so the other functions inside can then use these variables
+    for the calculation of the order costs
+
+    :param order_base_price: Inputs the base price for an order, without any discount
+    :type order_base_price: float
+    :param price_per_unit: Inputs the material price per unit
+    :type price_per_unit: float
+    :param max_rebate: Inputs the maximum discount for an order
+    :type max_rebate: float
+    :param rebate_const: Inputs the rebate constant
+    :type rebate_const: float
+
+    :return: Returns the order costs
+    :rtype: float
+    """
     def orderCosts(x):
         """This function calculates the order costs with a quantity discount
 

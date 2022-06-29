@@ -150,7 +150,6 @@ def calloptOrderAmount(narr):
         opt = minimize(optimizedOrderAmount, 20, args=(narr[1][i], getStorageCosts(narr[0][i]), orderCostFunc), bounds=[(1, 1000)])
         x = math.ceil(opt.x)
         frequency = narr[1][i]/x
-        #frequency = math.ceil(frequency)
         print("Optimized Order Amount for Material with ID", narr[0][i], "is:", x,"with the order frequency:", round(frequency,0))
         i += 1
 

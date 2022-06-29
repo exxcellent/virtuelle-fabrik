@@ -128,6 +128,17 @@ def getMachineCapabilities(recipe, arr):
 
 
 def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
+    """In this function, properties are passed with and so the other functions inside can then use these variables
+    for the calculation of the production frequency
+
+            :param x: Inputs a recipe
+            :type x: object
+            :param x: Inputs a list of machines
+            :type x: list
+
+            :return: Returns the adjusted production frequency
+            :rtype: float
+    """
     machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
 
     def production_frequency(x: List[float]):
@@ -151,6 +162,17 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
     return production_frequency
 
 def create_total_costs_estimator(recipe, machine_list: List[Machine]):
+    """In this function, properties are passed with and so the other functions inside can then use these variables
+    for the calculation of the total costs
+
+    :param x: Inputs a recipe
+    :type x: object
+    :param x: Inputs a list of machines
+    :type x: list
+
+    :return: Returns the total costs
+    :rtype: float
+    """
     machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
 
     def total_costs(x: List[float]):
@@ -206,6 +228,6 @@ costs_per_product = create_costs_per_product_estimator(Product.recipes[0], machi
 bounds = getBounds(Product.recipes[0])
 opt = minimize(costs_per_product, x0=[1 for m in machine_list],bounds=bounds)
 print("\nCosts per product:","\033[1m",round(opt.fun,2), "monetary units", "\033[0;0m"
-      "\nThe capacity utilisation of the individual machines is:")
+      "\nThe capacity utilisation of the individual machines are:")
 getMachineCapabilities(Product.recipes[0], opt.x)
 

@@ -234,12 +234,5 @@ def getBounds(recipe):
         i+=1
     return bounds
 
-machine_list = getMachineList(Product.recipes[0])
-costs_per_product = create_costs_per_product_estimator(Product.recipes[0], machine_list)
-bounds = getBounds(Product.recipes[0])
-opt = minimize(costs_per_product, x0=[1 for m in machine_list],bounds=bounds)
-print("\nCosts per product:","\033[1m",round(opt.fun,2), "monetary units", "\033[0;0m"
-      "\nThe capacity utilisation of the individual machines are:")
 
-getMachineCapabilities(Product.recipes[0], opt.x)
 

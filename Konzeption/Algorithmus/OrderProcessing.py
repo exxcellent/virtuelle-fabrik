@@ -167,5 +167,3 @@ def calloptOrderAmount(narr):
         frequency = narr[1][i]/x
         print("Optimized Order Amount for Material with ID", narr[0][i], "is:", x,"with the order frequency:", round(frequency,0))
         i += 1
-
-calloptOrderAmount(materialPlanning(b1))

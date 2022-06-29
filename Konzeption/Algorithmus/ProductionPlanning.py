@@ -131,13 +131,13 @@ def create_production_frequency_estimator(recipe, machine_list: List[Machine]):
     """In this function, properties are passed with and so the other functions inside can then use these variables
     for the calculation of the production frequency
 
-            :param x: Inputs a recipe
-            :type x: object
-            :param x: Inputs a list of machines
-            :type x: list
+    :param x: Inputs a recipe
+    :type x: object
+    :param x: Inputs a list of machines
+    :type x: list
 
-            :return: Returns the adjusted production frequency
-            :rtype: float
+    :return: Returns the adjusted production frequency
+    :rtype: float
     """
     machine_id_to_index_mapping = {m.machine_ID: i for i, m in enumerate(machine_list)}
 

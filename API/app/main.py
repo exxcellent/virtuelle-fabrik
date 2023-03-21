@@ -1,16 +1,12 @@
 # https://www.tutlinks.com/fastapi-with-postgresql-crud-async/
 
 from typing import List
-import databases
-import sqlalchemy
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import os
-import urllib
-import sys
 
-from .factory_models import notes
+from persistence.notes import notes
+from persistence.database import database, init_tables
 
 app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")
 app.add_middleware(
@@ -21,15 +17,6 @@ app.add_middleware(
     allow_headers=["*"]
 )
 # allow_origins=['client-facing-example-app.com', 'localhost:5000']
-
-DATABASE_URL = "sqlite:///./fabrik.db"
-database = databases.Database(DATABASE_URL)
-
-metadata = sqlalchemy.MetaData()
-engine = sqlalchemy.create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-metadata.create_all(engine)
 
 
 class NoteIn(BaseModel):
@@ -46,6 +33,7 @@ class Note(BaseModel):
 @app.on_event("startup")
 async def startup():
     await database.connect()
+    await init_tables();
 
 
 @app.on_event("shutdown")
@@ -65,7 +53,7 @@ async def create_note(note: NoteIn):
     return {**note.dict(), "id": last_record_id}
 
 @app.delete("/notes/{note_id}/", status_code = status.HTTP_200_OK)
-async def update_note(note_id: int):
+async def delete_note(note_id: int):
     query = notes.delete().where(notes.c.id == note_id)
     await database.execute(query)
     return {"message": "Note with id: {} deleted successfully!".format(note_id)}

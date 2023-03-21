@@ -1,6 +1,5 @@
 import sqlalchemy
-
-metadata = sqlalchemy.MetaData()
+from .database import metadata
 
 notes = sqlalchemy.Table(
     "notes",

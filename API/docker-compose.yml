@@ -1,7 +1,15 @@
 version: "3"
 
 services:
-  fabrik-api:
-    build: .
+  # fabrik-api:
+  #   build: .
+  #   ports:
+  #     - 80:80
+  postgresql-db:
+    image: postgres:15.2-alpine
     ports:
-      - 80:80
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: DB

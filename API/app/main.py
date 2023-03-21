@@ -1,12 +1,14 @@
 # https://www.tutlinks.com/fastapi-with-postgresql-crud-async/
 
 from typing import List
+
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from persistence.database import Base, async_session, engine
+from persistence.maschinen import get_maschinen, add_maschine
 from pydantic import BaseModel
 
-from persistence.notes import notes
-from persistence.database import database, init_tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")
 app.add_middleware(
@@ -14,52 +16,78 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 # allow_origins=['client-facing-example-app.com', 'localhost:5000']
 
 
-class NoteIn(BaseModel):
-    text: str
-    completed: bool
+
+class MaschinenBefaehigungIn(BaseModel):
+    schrittId: str
+    taktrate: float
 
 
-class Note(BaseModel):
-    id: int
-    text: str
-    completed: bool
+class MaschineIn(BaseModel):
+    name: str
+    ruestzeit: float
+    kostenMinute: float
+    ausfallWahrscheinlichkeit: float
+    mitarbeiterMin: int
+    mitarbeiterMax: int
+    maschinenbefaehigung: List[MaschinenBefaehigungIn]
 
 
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-    await init_tables();
+class MaschinenBefaehigung(BaseModel):
+    id: str
+    schrittId: str
+    taktrate: float
 
 
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+class Maschine(BaseModel):
+    id: str
+    name: str
+    ruestzeit: float
+    kostenMinute: float
+    ausfallWahrscheinlichkeit: float
+    mitarbeiterMin: int
+    mitarbeiterMax: int
+    maschinenbefaehigung: List[MaschinenBefaehigung]
 
 
-@app.get("/notes/", response_model=List[Note], status_code = status.HTTP_200_OK)
-async def read_notes(skip: int = 0, take: int = 20):
-    query = notes.select().offset(skip).limit(take)
-    return await database.fetch_all(query)
 
-@app.post("/notes/", response_model=Note, status_code = status.HTTP_201_CREATED)
-async def create_note(note: NoteIn):
-    query = notes.insert().values(text=note.text, completed=note.completed)
-    last_record_id = await database.execute(query)
-    return {**note.dict(), "id": last_record_id}
 
-@app.delete("/notes/{note_id}/", status_code = status.HTTP_200_OK)
-async def delete_note(note_id: int):
-    query = notes.delete().where(notes.c.id == note_id)
-    await database.execute(query)
-    return {"message": "Note with id: {} deleted successfully!".format(note_id)}
 
-@app.put("/notes/{note_id}/", response_model=Note, status_code = status.HTTP_200_OK)
-async def update_note(note_id: int, payload: NoteIn):
-    query = notes.update().where(notes.c.id == note_id).values(text=payload.text, completed=payload.completed)
-    await database.execute(query)
-    return {**payload.dict(), "id": note_id}
+@app.get("/maschinen/", response_model=List[Maschine], status_code=status.HTTP_200_OK)
+async def read_maschinen(skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        return await get_maschinen(session, skip, take)
+
+
+@app.post("/maschinen/", response_model=Maschine, status_code=status.HTTP_201_CREATED)
+async def create_maschine(maschine: MaschineIn):
+    async with async_session() as session:
+        return await add_maschine(session, maschine)
+
+
+# @app.delete("/maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
+# async def delete_maschine(maschine_id: int):
+#     query = maschinen.delete().where(maschinen.c.id == maschine_id)
+#     await database.execute(query)
+#     return {
+#         "message": "Maschinen with id: {} deleted successfully!".format(maschine_id)
+#     }
+
+
+# @app.put(
+#     "/maschinen/{maschine_id}/",
+#     response_model=Maschinen,
+#     status_code=status.HTTP_200_OK,
+# )
+# async def update_maschine(maschine_id: int, payload: MaschinenIn):
+#     query = (
+#         maschinen.update()
+#         .where(maschinen.c.id == maschine_id)
+#         .values(**payload)
+#     )
+#     await database.execute(query)
+#     return {**payload.dict(), "id": maschine_id}

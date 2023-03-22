@@ -6,10 +6,10 @@ from attrs import asdict
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from src.domain.exception import DomainException
-from src.domain.models import Maschine, MaschinenBefaehigung
-from src.persistence.database import async_session
-from src.persistence.maschinen import get_maschinen, add_maschine, remove_maschine
+from API.app.src.domain.exception import DomainException
+from API.app.src.domain.models import Maschine, MaschinenBefaehigung
+from API.app.src.persistence.database import async_session
+from API.app.src.persistence.maschinen import get_maschinen, add_maschine, remove_maschine
 from pydantic import BaseConfig, BaseModel
 
 

@@ -1,10 +1,11 @@
 version: "3"
 
 services:
-  # fabrik-api:
-  #   build: .
-  #   ports:
-  #     - 80:80
+  fabrik-api:
+    build: .
+    command: alembic upgrade head
+    ports:
+      - 8000:8000
   postgresql-db:
     image: postgres:15.2-alpine
     ports:

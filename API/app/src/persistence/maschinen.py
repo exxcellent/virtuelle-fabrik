@@ -90,7 +90,7 @@ async def add_maschine(session: AsyncSession, maschine: Maschine) -> Maschine:
 async def remove_maschine(session: AsyncSession, maschine_id: str) -> None:
     row = await session.execute(select(MaschineEntity).where(MaschineEntity.id == maschine_id))
     try:
-        row = row.scalar_one()
+        row = row.unique().scalar_one()
     except NoResultFound:
         raise DomainException(message=f"Machine with id {maschine_id} not found!")    
     await session.delete(row)

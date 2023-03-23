@@ -6,11 +6,16 @@ from attrs import asdict
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseConfig, BaseModel
+
 from API.app.src.domain.exception import DomainException
-from API.app.src.domain.models import Maschine, MaschinenBefaehigung
+from API.app.src.domain.models import Maschine, MaschinenBefaehigung, Material
 from API.app.src.persistence.database import async_session
 from API.app.src.persistence.maschinen import get_maschinen, add_maschine, remove_maschine
-from pydantic import BaseConfig, BaseModel
+from API.app.src.persistence.produkte import add_material, get_material, remove_material
+
+
+
 
 
 app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")
@@ -106,4 +111,44 @@ async def delete_maschine(maschine_id: str):
         await remove_maschine(session, maschine_id)
         return {
             "message": "Maschine with id: {} deleted successfully!".format(maschine_id)
+        }
+
+class MaterialIn(APIModel):
+    name: str
+    kosten_stueck: float
+    bestand: float
+    aufstocken_minute: float
+
+class MaterialTO(APIModel):
+    id: str
+    name: str
+    kosten_stueck: float
+    bestand: float
+    aufstocken_minute: float
+
+
+@app.get("/material/", response_model=List[MaterialTO], status_code=status.HTTP_200_OK)
+async def read_material(skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        result = await get_material(session, skip, take)
+        return [MaterialTO(**asdict(x)) for x in result]
+
+@app.post("/material/", response_model=MaterialTO, status_code=status.HTTP_201_CREATED)
+async def create_material(material: MaterialIn):
+    async with async_session() as session:
+        result = await add_material(
+            session,
+            Material(
+                id=uuid.uuid4().hex,
+                **material.dict(),
+            ),
+        )
+        return MaterialTO(**asdict(result))
+    
+@app.delete("/material/{material_id}/", status_code=status.HTTP_200_OK)
+async def delete_material(material_id: str):
+    async with async_session() as session:
+        await remove_material(session, material_id)
+        return {
+            "message": "Material with id: {} deleted successfully!".format(material_id)
         }

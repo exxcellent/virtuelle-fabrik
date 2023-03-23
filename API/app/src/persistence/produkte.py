@@ -1,8 +1,14 @@
-from typing import List
-from sqlalchemy import Column, Integer, Float, String, ForeignKey
+from typing import List, Sequence
+from attrs import asdict
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, select
 from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import NoResultFound
 
 from .database import Base
+
+from ..domain.exception import DomainException
+from ..domain.models import Material
 
 
 class MaterialEntity(Base):
@@ -42,4 +48,41 @@ class ProduktEntity(Base):
     produktionsschritte: Mapped[List["ProduktionsschrittEntity"]] = relationship()
     materialbedarf: Mapped[List["MaterialbedarfEntity"]] = relationship()
 
+
+# define persistence interface + implementation here
+
+
+async def get_material(
+    session: AsyncSession, skip: int = 0, take: int = 20
+) -> Sequence[Material]:
+    query = await session.execute(select(MaterialEntity).offset(skip).limit(take))
+
+    return [
+        Material(
+            id=m.id,
+            name=m.name,
+            kosten_stueck=m.kosten_stueck,
+            bestand=m.bestand,
+            aufstocken_minute=m.aufstocken_minute,
+        )
+        for m in query.scalars().all()
+    ]
+
+async def add_material(session: AsyncSession, material: Material) -> Material:
+    new_material = MaterialEntity(
+        **asdict(material),
+    )
+    session.add(new_material)
+    await session.commit()
+    return material
+
+
+async def remove_material(session: AsyncSession, material_id: str) -> None:
+    row = await session.execute(select(MaterialEntity).where(MaterialEntity.id == material_id))
+    try:
+        row = row.unique().scalar_one()
+    except NoResultFound:
+        raise DomainException(message=f"Material with id {material_id} not found!")    
+    await session.delete(row)
+    await session.commit()
 

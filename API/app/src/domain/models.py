@@ -1,5 +1,3 @@
-
-
 from attr import define
 
 
@@ -23,3 +21,31 @@ class Maschine:
 
 def no_maschinenbefaehigungen(a, _):
     return a.name != ("maschinenbefaehigungen")
+
+
+@define
+class Material:
+  id: str
+  name: str
+  kosten_stueck: float
+  bestand: float
+  aufstocken_minute: float
+
+@define
+class Materialbedarf:
+  id: str
+  material: Material
+  menge: float
+
+@define
+class Produktionsschritt:
+  id: str
+  schritt: int
+
+@define
+class Produkt:
+  id: str
+  name: str
+  verkaufspreis: float
+  produktionsschritte: list[Produktionsschritt]
+  materialbedarf: list[Materialbedarf]

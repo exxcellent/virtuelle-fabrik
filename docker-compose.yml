@@ -1,11 +1,24 @@
 version: "3"
 
+networks:
+  backend:
 services:
   fabrik-api:
     build: .
-    command: alembic upgrade head
+    command: sh -c "alembic upgrade head && uvicorn API.app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - 8000:8000
+    environment:
+      DB_USER: user
+      DB_PWD: password
+      DB_HOST: postgresql-db
+      DB_PORT: 5432
+      DB_NAME: DB
+    depends_on:
+      - postgresql-db
+    networks:
+      - backend
+
   postgresql-db:
     image: postgres:15.2-alpine
     ports:
@@ -14,3 +27,5 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: DB
+    networks:
+      - backend

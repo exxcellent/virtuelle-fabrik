@@ -49,3 +49,18 @@ class Produkt:
   verkaufspreis: float
   produktionsschritte: list[Produktionsschritt]
   materialbedarf: list[Materialbedarf]
+
+@define
+class Station:
+  id: str
+  name: str
+  maschinen: list[str]
+  chargen: list[str]
+
+@define
+class Produktionslinie:
+  id: str
+  stationen: list[Station]
+  # TODO: add type definitions for Charge and Mitarbeiter
+  chargen: list
+  mitarbeiter: list

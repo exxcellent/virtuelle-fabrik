@@ -13,9 +13,7 @@ from API.app.src.domain.models import Maschine, MaschinenBefaehigung, Material
 from API.app.src.persistence.database import async_session
 from API.app.src.persistence.maschinen import get_maschinen, add_maschine, remove_maschine
 from API.app.src.persistence.produkte import add_material, get_material, remove_material
-
-
-
+from API.app.src.socket_handlers import setupWebsocket
 
 
 app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")
@@ -26,6 +24,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+setupWebsocket(app)
 
 def to_lower_camel(string: str) -> str:
     upper = "".join(word.capitalize() for word in string.split("_"))

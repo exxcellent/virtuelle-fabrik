@@ -8,8 +8,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseConfig, BaseModel
 
-from API.app.src.domain.exception import DomainException
-from API.app.src.domain.models import (
+from virtuelle_fabrik.domain.exception import DomainException
+from virtuelle_fabrik.domain.models import (
     Maschine,
     MaschinenBefaehigung,
     Material,
@@ -17,13 +17,13 @@ from API.app.src.domain.models import (
     Produkt,
     Produktionsschritt,
 )
-from API.app.src.persistence.database import async_session
-from API.app.src.persistence.maschinen import (
+from virtuelle_fabrik.persistence.database import async_session
+from virtuelle_fabrik.persistence.maschinen import (
     get_maschinen,
     add_maschine,
     remove_maschine,
 )
-from API.app.src.persistence.produkte import (
+from virtuelle_fabrik.persistence.produkte import (
     add_material,
     add_produkt,
     get_all_material,
@@ -32,7 +32,7 @@ from API.app.src.persistence.produkte import (
     get_produkt,
     remove_material,
 )
-from API.app.src.socket_handlers import setupWebsocket
+from .socket_handlers import setupWebsocket
 
 
 app = FastAPI(title="REST API using FastAPI PostgreSQL Async EndPoints")

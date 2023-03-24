@@ -3,9 +3,9 @@ from attr import asdict, define
 from fastapi import FastAPI
 import socketio
 import asyncio
-from API.app.src.domain.models import Produktionslinie, Station
+from virtuelle_fabrik.domain.models import Produktionslinie, Station
 
-from API.app.src.persistence.produktionslinien import (
+from virtuelle_fabrik.persistence.produktionslinien import (
     get_produktionslinie,
     udpate_produktsionslinie,
 )

@@ -7,8 +7,8 @@ from sqlalchemy.exc import NoResultFound
 
 from .database import Base
 
-from ..domain.exception import DomainException
-from ..domain.models import (
+from virtuelle_fabrik.domain.exception import DomainException
+from virtuelle_fabrik.domain.models import (
     Material,
     Materialbedarf,
     Produkt,

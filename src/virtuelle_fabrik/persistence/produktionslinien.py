@@ -1,4 +1,4 @@
-from API.app.src.domain.models import Produktionslinie
+from virtuelle_fabrik.domain.models import Produktionslinie
 
 
 holder = dict(

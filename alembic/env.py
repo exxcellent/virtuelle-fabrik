@@ -13,7 +13,7 @@ config = context.config
 
 # this will overwrite the ini-file sqlalchemy.url path
 # with the path given in the config of the main code
-from API.app.src.persistence.database import get_db_url_from_env
+from virtuelle_fabrik.persistence.database import get_db_url_from_env
 
 config.set_main_option(
     "sqlalchemy.url",
@@ -27,7 +27,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from API.app.src.persistence import Base
+from virtuelle_fabrik.persistence import Base
 
 target_metadata = Base.metadata
 

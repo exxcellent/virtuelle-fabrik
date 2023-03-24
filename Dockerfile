@@ -12,6 +12,10 @@ RUN poetry config virtualenvs.create false \
   && poetry install --without dev,test,docs --no-interaction --no-ansi --no-root
 
 # Creating folders, and files for a project:
-COPY . /code
+COPY alembic /code/alembic
+COPY alembic.ini /code/
+COPY src /code/src
 
-CMD ["uvicorn", "API.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+WORKDIR /code/src
+
+CMD ["uvicorn", "virtuelle_fabrik.API.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -3,13 +3,12 @@ from attrs import asdict
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, delete, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..domain.exception import DomainException
-from ..domain.models import Maschine, MaschinenBefaehigung, no_maschinenbefaehigungen
-
+from virtuelle_fabrik.domain.exception import DomainException
+from virtuelle_fabrik.domain.models import Maschine, MaschinenBefaehigung, no_maschinenbefaehigungen
 
 from .database import Base
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class MaschineEntity(Base):

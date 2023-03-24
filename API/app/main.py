@@ -27,7 +27,9 @@ from API.app.src.persistence.produkte import (
     add_material,
     add_produkt,
     get_all_material,
+    get_all_produkte,
     get_material,
+    get_produkt,
     remove_material,
 )
 from API.app.src.socket_handlers import setupWebsocket
@@ -43,6 +45,7 @@ app.add_middleware(
 )
 
 setupWebsocket(app)
+
 
 def to_lower_camel(string: str) -> str:
     upper = "".join(word.capitalize() for word in string.split("_"))
@@ -219,6 +222,37 @@ class ProduktTO(APIModel):
     materialbedarf: list[MaterialbedarfTO]
 
 
+def convert_to_produktto(produkt: Produkt) -> ProduktTO:
+    return ProduktTO(
+        id=produkt.id,
+        name=produkt.name,
+        verkaufspreis=produkt.verkaufspreis,
+        produktionsschritte=[
+            ProduktionsschrittTO(**asdict(x)) for x in produkt.produktionsschritte
+        ],
+        materialbedarf=[
+            MaterialbedarfTO(id=x.id, material_id=x.material.id, menge=x.menge)
+            for x in produkt.materialbedarf
+        ],
+    )
+
+
+@app.get("/produkte/", response_model=List[ProduktTO], status_code=status.HTTP_200_OK)
+async def read_all_produkte(skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        result = await get_all_produkte(session, skip, take)
+        return [convert_to_produktto(x) for x in result]
+
+
+@app.get(
+    "/produkte/{produkt_id}", response_model=ProduktTO, status_code=status.HTTP_200_OK
+)
+async def read_produkt(produkt_id: str):
+    async with async_session() as session:
+        result = await get_produkt(session, produkt_id)
+        return convert_to_produktto(result)
+
+
 @app.post("/produkte/", response_model=ProduktTO, status_code=status.HTTP_201_CREATED)
 async def create_produkt(produkt: ProduktIn):
     async with async_session() as session:
@@ -243,15 +277,4 @@ async def create_produkt(produkt: ProduktIn):
             ),
         )
 
-        return ProduktTO(
-            id=result.id,
-            name=result.name,
-            verkaufspreis=result.verkaufspreis,
-            produktionsschritte=[
-                ProduktionsschrittTO(**asdict(x)) for x in result.produktionsschritte
-            ],
-            materialbedarf=[
-                MaterialbedarfTO(id=x.id, material_id=x.material.id, menge=x.menge)
-                for x in result.materialbedarf
-            ],
-        )
+        return convert_to_produktto(result)

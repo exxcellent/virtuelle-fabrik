@@ -8,7 +8,13 @@ from sqlalchemy.exc import NoResultFound
 from .database import Base
 
 from ..domain.exception import DomainException
-from ..domain.models import Material, Produkt, produkt_without_relationships
+from ..domain.models import (
+    Material,
+    Materialbedarf,
+    Produkt,
+    Produktionsschritt,
+    produkt_without_relationships,
+)
 
 
 class MaterialEntity(Base):
@@ -27,7 +33,7 @@ class MaterialbedarfEntity(Base):
     id = Column(String, primary_key=True)
     menge = Column(Float)
     material_id: Mapped[str] = mapped_column(ForeignKey("material.id"))
-    material: Mapped["MaterialEntity"] = relationship()
+    material: Mapped["MaterialEntity"] = relationship(lazy="joined")
     produkt_id: Mapped[str] = mapped_column(ForeignKey("produkt.id"))
 
 
@@ -45,8 +51,10 @@ class ProduktEntity(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     verkaufspreis = Column(Float)
-    produktionsschritte: Mapped[List["ProduktionsschrittEntity"]] = relationship()
-    materialbedarf: Mapped[List["MaterialbedarfEntity"]] = relationship()
+    produktionsschritte: Mapped[List["ProduktionsschrittEntity"]] = relationship(
+        lazy="joined"
+    )
+    materialbedarf: Mapped[List["MaterialbedarfEntity"]] = relationship(lazy="joined")
 
 
 # define persistence interface + implementation here
@@ -68,19 +76,21 @@ async def get_all_material(
         for m in query.scalars().all()
     ]
 
-async def get_material(
-    session: AsyncSession, material_id: str
-) -> Material:
-    query = await session.execute(select(MaterialEntity).filter(MaterialEntity.id == material_id))
+
+async def get_material(session: AsyncSession, material_id: str) -> Material:
+    query = await session.execute(
+        select(MaterialEntity).filter(MaterialEntity.id == material_id)
+    )
 
     m = query.scalars().one()
     return Material(
-            id=m.id,
-            name=m.name,
-            kosten_stueck=m.kosten_stueck,
-            bestand=m.bestand,
-            aufstocken_minute=m.aufstocken_minute,
-        )
+        id=m.id,
+        name=m.name,
+        kosten_stueck=m.kosten_stueck,
+        bestand=m.bestand,
+        aufstocken_minute=m.aufstocken_minute,
+    )
+
 
 async def add_material(session: AsyncSession, material: Material) -> Material:
     new_material = MaterialEntity(
@@ -92,13 +102,61 @@ async def add_material(session: AsyncSession, material: Material) -> Material:
 
 
 async def remove_material(session: AsyncSession, material_id: str) -> None:
-    row = await session.execute(select(MaterialEntity).where(MaterialEntity.id == material_id))
+    row = await session.execute(
+        select(MaterialEntity).where(MaterialEntity.id == material_id)
+    )
     try:
         row = row.unique().scalar_one()
     except NoResultFound:
-        raise DomainException(message=f"Material with id {material_id} not found!")    
+        raise DomainException(message=f"Material with id {material_id} not found!")
     await session.delete(row)
     await session.commit()
+
+
+def convert_to_produkt(entity: ProduktEntity) -> Produkt:
+    return Produkt(
+        id=entity.id,
+        name=entity.name,
+        verkaufspreis=entity.verkaufspreis,
+        produktionsschritte=[
+            Produktionsschritt(id=x.id, schritt=x.schritt)
+            for x in entity.produktionsschritte
+        ],
+        materialbedarf=[
+            Materialbedarf(
+                id=x.id,
+                material=Material(
+                    id=x.material.id,
+                    name=x.material.name,
+                    kosten_stueck=x.material.kosten_stueck,
+                    bestand=x.material.bestand,
+                    aufstocken_minute=x.material.aufstocken_minute,
+                ),
+                menge=x.menge,
+            )
+            for x in entity.materialbedarf
+        ],
+    )
+
+
+async def get_all_produkte(
+    session: AsyncSession, skip: int = 0, take: int = 20
+) -> Sequence[Produkt]:
+    query = await session.execute(select(ProduktEntity).offset(skip).limit(take))
+
+    return [convert_to_produkt(p) for p in query.scalars().unique().all()]
+
+
+async def get_produkt(session: AsyncSession, produkt_id: str) -> Produkt:
+    query = await session.execute(
+        select(ProduktEntity).filter(ProduktEntity.id == produkt_id)
+    )
+    try:
+        product_entity = query.scalars().unique().one()
+        await session.commit()
+        return convert_to_produkt(product_entity)
+    except NoResultFound:
+        raise DomainException(message=f"Produkt with id {produkt_id} not found!")
 
 
 async def add_produkt(session: AsyncSession, produkt: Produkt) -> Produkt:

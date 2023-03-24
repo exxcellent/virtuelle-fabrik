@@ -81,15 +81,18 @@ async def get_material(session: AsyncSession, material_id: str) -> Material:
     query = await session.execute(
         select(MaterialEntity).filter(MaterialEntity.id == material_id)
     )
-
-    m = query.scalars().one()
-    return Material(
-        id=m.id,
-        name=m.name,
-        kosten_stueck=m.kosten_stueck,
-        bestand=m.bestand,
-        aufstocken_minute=m.aufstocken_minute,
-    )
+    try:
+        m = query.scalars().one()
+        await session.commit()
+        return Material(
+            id=m.id,
+            name=m.name,
+            kosten_stueck=m.kosten_stueck,
+            bestand=m.bestand,
+            aufstocken_minute=m.aufstocken_minute,
+        )
+    except NoResultFound:
+        raise DomainException(message=f"Material with id {material_id} not found!")
 
 
 async def add_material(session: AsyncSession, material: Material) -> Material:

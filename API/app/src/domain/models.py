@@ -50,6 +50,10 @@ class Produkt:
   produktionsschritte: list[Produktionsschritt]
   materialbedarf: list[Materialbedarf]
 
+
+def produkt_without_relationships(a, _):
+    return a.name not in set(("produktionsschritte", "materialbedarf"))
+
 @define
 class Station:
   id: str

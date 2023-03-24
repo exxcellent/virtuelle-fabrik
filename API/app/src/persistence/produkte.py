@@ -8,7 +8,7 @@ from sqlalchemy.exc import NoResultFound
 from .database import Base
 
 from ..domain.exception import DomainException
-from ..domain.models import Material
+from ..domain.models import Material, Produkt, produkt_without_relationships
 
 
 class MaterialEntity(Base):
@@ -52,7 +52,7 @@ class ProduktEntity(Base):
 # define persistence interface + implementation here
 
 
-async def get_material(
+async def get_all_material(
     session: AsyncSession, skip: int = 0, take: int = 20
 ) -> Sequence[Material]:
     query = await session.execute(select(MaterialEntity).offset(skip).limit(take))
@@ -67,6 +67,20 @@ async def get_material(
         )
         for m in query.scalars().all()
     ]
+
+async def get_material(
+    session: AsyncSession, material_id: str
+) -> Material:
+    query = await session.execute(select(MaterialEntity).filter(MaterialEntity.id == material_id))
+
+    m = query.scalars().one()
+    return Material(
+            id=m.id,
+            name=m.name,
+            kosten_stueck=m.kosten_stueck,
+            bestand=m.bestand,
+            aufstocken_minute=m.aufstocken_minute,
+        )
 
 async def add_material(session: AsyncSession, material: Material) -> Material:
     new_material = MaterialEntity(
@@ -86,3 +100,18 @@ async def remove_material(session: AsyncSession, material_id: str) -> None:
     await session.delete(row)
     await session.commit()
 
+
+async def add_produkt(session: AsyncSession, produkt: Produkt) -> Produkt:
+    new_produkt = ProduktEntity(
+        **asdict(produkt, filter=produkt_without_relationships),
+        produktionsschritte=[
+            ProduktionsschrittEntity(**asdict(x)) for x in produkt.produktionsschritte
+        ],
+        materialbedarf=[
+            MaterialbedarfEntity(id=x.id, menge=x.menge, material_id=x.material.id)
+            for x in produkt.materialbedarf
+        ],
+    )
+    session.add(new_produkt)
+    await session.commit()
+    return produkt

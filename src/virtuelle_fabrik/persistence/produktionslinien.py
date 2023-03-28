@@ -5,8 +5,6 @@ holder = dict(
     produktionslinie=Produktionslinie(
         id="1",
         stationen=[],
-        chargen=[],
-        mitarbeiter=[],
     )
 )
 

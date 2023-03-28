@@ -1,3 +1,4 @@
+from typing import List
 from attr import define
 
 
@@ -16,7 +17,7 @@ class Maschine:
     ausfall_wahrscheinlichkeit: float
     mitarbeiter_min: int
     mitarbeiter_max: int
-    maschinenbefaehigungen: list[MaschinenBefaehigung]
+    maschinenbefaehigungen: List[MaschinenBefaehigung]
 
 
 def no_maschinenbefaehigungen(a, _):
@@ -47,24 +48,36 @@ class Produkt:
   id: str
   name: str
   verkaufspreis: float
-  produktionsschritte: list[Produktionsschritt]
-  materialbedarf: list[Materialbedarf]
+  produktionsschritte: List[Produktionsschritt]
+  materialbedarf: List[Materialbedarf]
 
 
 def produkt_without_relationships(a, _):
     return a.name not in set(("produktionsschritte", "materialbedarf"))
 
+
+@define
+class Produktbedarf:
+  id: str
+  produkt: Produkt
+  stueckzahl: int
+
+@define
+class Charge:
+  id: str
+  name: str
+  prioritaet: int
+  produktbedarf: List[Produktbedarf]
+
 @define
 class Station:
   id: str
   name: str
-  maschinen: list[str]
-  chargen: list[str]
+  maschinen: List[Maschine]
+  chargen: List[Charge]
 
 @define
 class Produktionslinie:
   id: str
-  stationen: list[Station]
-  # TODO: add type definitions for Charge and Mitarbeiter
-  chargen: list
-  mitarbeiter: list
+  stationen: List[Station]
+

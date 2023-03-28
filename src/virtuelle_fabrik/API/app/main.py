@@ -10,13 +10,16 @@ from pydantic import BaseConfig, BaseModel
 
 from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
+    Charge,
     Maschine,
     MaschinenBefaehigung,
     Material,
     Materialbedarf,
     Produkt,
+    Produktbedarf,
     Produktionsschritt,
 )
+from virtuelle_fabrik.persistence.charge import add_charge, get_all_chargen, get_charge
 from virtuelle_fabrik.persistence.database import async_session
 from virtuelle_fabrik.persistence.maschinen import (
     get_maschinen,
@@ -308,6 +311,91 @@ async def create_produkt(szenario_id: str, produkt: ProduktIn):
         )
 
         return convert_to_produktto(result)
+
+
+class ProduktbedarfIn(APIModel):
+    produkt_id: str
+    stueckzahl: int
+
+
+class ChargeIn(APIModel):
+    name: str
+    prioritaet: int
+    produktbedarf: List[ProduktbedarfIn]
+
+
+class ProduktbedarfTO(APIModel):
+    id: str
+    produkt_id: str
+    stueckzahl: int
+
+
+class ChargeTO(APIModel):
+    id: str
+    name: str
+    prioritaet: int
+    produktbedarf: List[ProduktbedarfTO]
+
+
+def convert_to_chargeto(charge: Charge) -> ChargeTO:
+    return ChargeTO(
+        id=charge.id,
+        name=charge.name,
+        prioritaet=charge.prioritaet,
+        produktbedarf=[
+            ProduktbedarfTO(id=x.id, produkt_id=x.produkt.id, stueckzahl=x.stueckzahl)
+            for x in charge.produktbedarf
+        ],
+    )
+
+
+@szenario_router.get(
+    "/charge/",
+    response_model=List[ChargeTO],
+    status_code=status.HTTP_200_OK,
+)
+async def read_all_chargen(szenario_id: str, skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        result = await get_all_chargen(session, skip, take)
+        return [convert_to_chargeto(x) for x in result]
+
+
+@szenario_router.get(
+    "/charge/{charge_id}",
+    response_model=ChargeTO,
+    status_code=status.HTTP_200_OK,
+)
+async def read_charge(szenario_id: str, charge_id: str):
+    async with async_session() as session:
+        result = await get_charge(session, charge_id)
+        return convert_to_chargeto(result)
+
+
+@szenario_router.post(
+    "/charge/",
+    response_model=ChargeTO,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_charge(szenario_id: str, charge: ChargeIn):
+    async with async_session() as session:
+        result = await add_charge(
+            session,
+            Charge(
+                id=uuid.uuid4().hex,
+                name=charge.name,
+                prioritaet=charge.prioritaet,
+                produktbedarf=[
+                    Produktbedarf(
+                        id=uuid.uuid4().hex,
+                        produkt=await get_produkt(session, x.produkt_id),
+                        stueckzahl=x.stueckzahl,
+                    )
+                    for x in charge.produktbedarf
+                ],
+            ),
+        )
+
+        return convert_to_chargeto(result)
 
 
 app.include_router(szenario_router)

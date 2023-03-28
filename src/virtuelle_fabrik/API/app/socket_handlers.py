@@ -1,13 +1,19 @@
 from enum import Enum
+from typing import List
+import uuid
 from attr import asdict, define
 from fastapi import FastAPI
 import socketio
 import asyncio
+
 from virtuelle_fabrik.domain.models import Produktionslinie, Station
 
+from virtuelle_fabrik.persistence.charge import get_charge
+from virtuelle_fabrik.persistence.database import async_session
+from virtuelle_fabrik.persistence.maschinen import get_maschine
 from virtuelle_fabrik.persistence.produktionslinien import (
-    get_produktionslinie,
-    udpate_produktsionslinie,
+    add_produktionslinie,
+    update_produktionslinie,
 )
 
 
@@ -22,14 +28,43 @@ class NotificationType(str, Enum):
 class EditorNotification:
     title: str | None = None
     id: str | None = None
-    title: str | None = None
     details: str | None = None
     type: NotificationType | None = None
     showClose: bool | None = None
 
 
-class EditorNamespace(socketio.AsyncNamespace):
+@define
+class StationTO:
+    id: str
+    name: str
+    maschinen: List[str]
+    chargen: List[str]
 
+
+@define
+class ProduktionslinieTO:
+    id: str
+    stationen: List[StationTO]
+
+
+def convert_to_produktionslinieto(
+    produktionslinie: Produktionslinie,
+) -> ProduktionslinieTO:
+    return ProduktionslinieTO(
+        id=produktionslinie.id,
+        stationen=[
+            StationTO(
+                id=x.id,
+                name=x.name,
+                maschinen=list([m.id for m in x.maschinen]),
+                chargen=list([c.id for c in x.chargen]),
+            )
+            for x in produktionslinie.stationen
+        ],
+    )
+
+
+class EditorNamespace(socketio.AsyncNamespace):
     _task: asyncio.Task | None = None
 
     async def run_optimization(self):
@@ -54,21 +89,43 @@ class EditorNamespace(socketio.AsyncNamespace):
         )
 
     async def on_connect(self, sid, environ):
-        await self.emit("produktionslinieChanged", asdict(await get_produktionslinie()))
+        async with async_session() as session:
+            await self.emit(
+                "produktionslinieChanged",
+                convert_to_produktionslinieto(
+                    await add_produktionslinie(
+                        session, Produktionslinie(id=uuid.uuid4().hex)
+                    )
+                ),
+            )
 
     def on_disconnect(self, sid):
         pass
 
-    async def on_changeProduktionslinie(self, sid, produktionslineDto: dict):
-        produktionslinie = Produktionslinie(
-            id="1",
-            stationen=[Station(**s) for s in produktionslineDto["stationen"]],
-            chargen=[],
-            mitarbeiter=[],
-        )
+    async def on_changeProduktionslinie(
+        self, sid, produktionslineto: ProduktionslinieTO
+    ):
+        async with async_session() as session:
 
-        await udpate_produktsionslinie(produktionslinie)
-        await self.emit("produktionslinieChanged", produktionslineDto, skip_sid=sid)
+            def synchronous_get_all(getter, list):
+                results = [getter(session, x) for x in list]
+                return asyncio.gather(*results)
+
+            produktionslinie = Produktionslinie(
+                id=produktionslineto.id,
+                stationen=[
+                    Station(
+                        id=s.id,
+                        name=s.name,
+                        maschinen=synchronous_get_all(get_maschine, s.maschinen),
+                        chargen=synchronous_get_all(get_charge, s.chargen),
+                    )
+                    for s in produktionslineto.stationen
+                ],
+            )
+
+            await update_produktionslinie(produktionslinie)
+            await self.emit("produktionslinieChanged", produktionslineto, skip_sid=sid)
 
     async def on_validateProduktionslinie(
         self, sid, produktionslinie
@@ -76,7 +133,7 @@ class EditorNamespace(socketio.AsyncNamespace):
         # TODO: actually validate incoming produktionslinie
         return []
 
-    async def on_startSimulation(self, sid, produktionslinieDto: dict):
+    async def on_startSimulation(self, sid, produktionslinieto: ProduktionslinieTO):
         if self._task and not self._task.cancelled():
             self._task.cancel()
 

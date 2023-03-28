@@ -6,7 +6,11 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtuelle_fabrik.domain.exception import DomainException
-from virtuelle_fabrik.domain.models import Maschine, MaschinenBefaehigung, no_maschinenbefaehigungen
+from virtuelle_fabrik.domain.models import (
+    Maschine,
+    MaschinenBefaehigung,
+    no_maschinenbefaehigungen,
+)
 
 from .database import Base
 
@@ -46,31 +50,44 @@ class MaschinenBefaehigungEntity(Base):
 # define persistence interface + implementation here
 
 
+def convert_to_maschine(entity: MaschineEntity) -> Maschine:
+    return Maschine(
+        id=entity.id,
+        name=entity.name,
+        ruestzeit=entity.ruestzeit,
+        kosten_minute=entity.kosten_minute,
+        ausfall_wahrscheinlichkeit=entity.ausfall_wahrscheinlichkeit,
+        mitarbeiter_min=entity.mitarbeiter_min,
+        mitarbeiter_max=entity.mitarbeiter_max,
+        maschinenbefaehigungen=list(
+            [
+                MaschinenBefaehigung(
+                    id=mb.id, schritt_id=mb.schritt_id, taktrate=mb.taktrate
+                )
+                for mb in entity.maschinenbefaehigungen
+            ]
+        ),
+    )
+
+
 async def get_maschinen(
     session: AsyncSession, skip: int = 0, take: int = 20
 ) -> Sequence[Maschine]:
     query = await session.execute(select(MaschineEntity).offset(skip).limit(take))
 
-    return [
-        Maschine(
-            id=m.id,
-            name=m.name,
-            ruestzeit=m.ruestzeit,
-            kosten_minute=m.kosten_minute,
-            ausfall_wahrscheinlichkeit=m.ausfall_wahrscheinlichkeit,
-            mitarbeiter_min=m.mitarbeiter_min,
-            mitarbeiter_max=m.mitarbeiter_max,
-            maschinenbefaehigungen=list(
-                [
-                    MaschinenBefaehigung(
-                        id=mb.id, schritt_id=mb.schritt_id, taktrate=mb.taktrate
-                    )
-                    for mb in m.maschinenbefaehigungen
-                ]
-            ),
-        )
-        for m in query.scalars().unique()
-    ]
+    return [convert_to_maschine(m) for m in query.scalars().unique()]
+
+
+async def get_maschine(session: AsyncSession, maschine_id: str) -> Maschine:
+    query = await session.execute(
+        select(MaschineEntity).filter(MaschineEntity.id == maschine_id)
+    )
+    try:
+        maschine_entity = query.scalars().unique().one()
+        await session.commit()
+        return convert_to_maschine(maschine_entity)
+    except NoResultFound:
+        raise DomainException(message=f"Maschine with id {maschine_id} not found!")
 
 
 async def add_maschine(session: AsyncSession, maschine: Maschine) -> Maschine:
@@ -87,11 +104,12 @@ async def add_maschine(session: AsyncSession, maschine: Maschine) -> Maschine:
 
 
 async def remove_maschine(session: AsyncSession, maschine_id: str) -> None:
-    row = await session.execute(select(MaschineEntity).where(MaschineEntity.id == maschine_id))
+    row = await session.execute(
+        select(MaschineEntity).where(MaschineEntity.id == maschine_id)
+    )
     try:
         row = row.unique().scalar_one()
     except NoResultFound:
-        raise DomainException(message=f"Machine with id {maschine_id} not found!")    
+        raise DomainException(message=f"Machine with id {maschine_id} not found!")
     await session.delete(row)
     await session.commit()
-

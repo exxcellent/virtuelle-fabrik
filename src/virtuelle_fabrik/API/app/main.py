@@ -4,7 +4,7 @@ from attrs import asdict
 
 
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request, status
+from fastapi import APIRouter, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseConfig, BaseModel
 
@@ -45,6 +45,8 @@ app.add_middleware(
 )
 
 setupWebsocket(app)
+
+szenario_router = APIRouter(prefix="/szenario/{szenario_id}")
 
 
 def to_lower_camel(string: str) -> str:
@@ -99,14 +101,22 @@ async def domain_exception_handler(request: Request, exc: DomainException):
     )
 
 
-@app.get("/maschinen/", response_model=List[MaschineTO], status_code=status.HTTP_200_OK)
+@szenario_router.get(
+    "maschinen/",
+    response_model=List[MaschineTO],
+    status_code=status.HTTP_200_OK,
+)
 async def read_maschinen(skip: int = 0, take: int = 20):
     async with async_session() as session:
         result = await get_maschinen(session, skip, take)
         return [MaschineTO(**asdict(x)) for x in result]
 
 
-@app.post("/maschinen/", response_model=MaschineTO, status_code=status.HTTP_201_CREATED)
+@szenario_router.post(
+    "maschinen/",
+    response_model=MaschineTO,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_maschine(maschine: MaschineIn):
     async with async_session() as session:
         maschine_in_dict = maschine.dict()
@@ -125,7 +135,7 @@ async def create_maschine(maschine: MaschineIn):
         return MaschineTO(**asdict(result))
 
 
-@app.delete("/maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
 async def delete_maschine(maschine_id: str):
     async with async_session() as session:
         await remove_maschine(session, maschine_id)
@@ -149,15 +159,21 @@ class MaterialTO(APIModel):
     aufstocken_minute: float
 
 
-@app.get("/material/", response_model=List[MaterialTO], status_code=status.HTTP_200_OK)
+@szenario_router.get(
+    "/material/",
+    response_model=List[MaterialTO],
+    status_code=status.HTTP_200_OK,
+)
 async def read_all_material(skip: int = 0, take: int = 20):
     async with async_session() as session:
         result = await get_all_material(session, skip, take)
         return [MaterialTO(**asdict(x)) for x in result]
 
 
-@app.get(
-    "/material/{material_id}", response_model=MaterialTO, status_code=status.HTTP_200_OK
+@szenario_router.get(
+    "/material/{material_id}",
+    response_model=MaterialTO,
+    status_code=status.HTTP_200_OK,
 )
 async def read_material(material_id: str):
     async with async_session() as session:
@@ -165,7 +181,11 @@ async def read_material(material_id: str):
         return MaterialTO(**asdict(result))
 
 
-@app.post("/material/", response_model=MaterialTO, status_code=status.HTTP_201_CREATED)
+@szenario_router.post(
+    "/material/",
+    response_model=MaterialTO,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_material(material: MaterialIn):
     async with async_session() as session:
         result = await add_material(
@@ -178,7 +198,7 @@ async def create_material(material: MaterialIn):
         return MaterialTO(**asdict(result))
 
 
-@app.delete("/material/{material_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("/material/{material_id}/", status_code=status.HTTP_200_OK)
 async def delete_material(material_id: str):
     async with async_session() as session:
         await remove_material(session, material_id)
@@ -237,24 +257,34 @@ def convert_to_produktto(produkt: Produkt) -> ProduktTO:
     )
 
 
-@app.get("/produkte/", response_model=List[ProduktTO], status_code=status.HTTP_200_OK)
-async def read_all_produkte(skip: int = 0, take: int = 20):
+@szenario_router.get(
+    "/produkte/",
+    response_model=List[ProduktTO],
+    status_code=status.HTTP_200_OK,
+)
+async def read_all_produkte(szenario_id: str, skip: int = 0, take: int = 20):
     async with async_session() as session:
         result = await get_all_produkte(session, skip, take)
         return [convert_to_produktto(x) for x in result]
 
 
-@app.get(
-    "/produkte/{produkt_id}", response_model=ProduktTO, status_code=status.HTTP_200_OK
+@szenario_router.get(
+    "/produkte/{produkt_id}",
+    response_model=ProduktTO,
+    status_code=status.HTTP_200_OK,
 )
-async def read_produkt(produkt_id: str):
+async def read_produkt(szenario_id: str, produkt_id: str):
     async with async_session() as session:
         result = await get_produkt(session, produkt_id)
         return convert_to_produktto(result)
 
 
-@app.post("/produkte/", response_model=ProduktTO, status_code=status.HTTP_201_CREATED)
-async def create_produkt(produkt: ProduktIn):
+@szenario_router.post(
+    "/produkte/",
+    response_model=ProduktTO,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_produkt(szenario_id: str, produkt: ProduktIn):
     async with async_session() as session:
         result = await add_produkt(
             session,
@@ -278,3 +308,6 @@ async def create_produkt(produkt: ProduktIn):
         )
 
         return convert_to_produktto(result)
+
+
+app.include_router(szenario_router)

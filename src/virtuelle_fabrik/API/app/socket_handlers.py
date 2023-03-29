@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import Any, List
 import uuid
 from attr import asdict, define
 from fastapi import FastAPI
@@ -88,14 +88,16 @@ class EditorNamespace(socketio.AsyncNamespace):
             ),
         )
 
-    async def on_connect(self, sid, environ):
+    async def on_connect(self, sid, *args):
         async with async_session() as session:
             await self.emit(
                 "produktionslinieChanged",
-                convert_to_produktionslinieto(
-                    await add_produktionslinie(
-                        session, Produktionslinie(id=uuid.uuid4().hex)
-                    )
+                asdict(
+                    convert_to_produktionslinieto(
+                        await add_produktionslinie(
+                            session, Produktionslinie(id=uuid.uuid4().hex, stationen=[])
+                        )
+                    ),
                 ),
             )
 
@@ -103,7 +105,7 @@ class EditorNamespace(socketio.AsyncNamespace):
         pass
 
     async def on_changeProduktionslinie(
-        self, sid, produktionslineto: ProduktionslinieTO
+        self, sid, produktionslineto: dict
     ):
         async with async_session() as session:
 
@@ -112,19 +114,19 @@ class EditorNamespace(socketio.AsyncNamespace):
                 return asyncio.gather(*results)
 
             produktionslinie = Produktionslinie(
-                id=produktionslineto.id,
+                id=produktionslineto["id"],
                 stationen=[
                     Station(
-                        id=s.id,
-                        name=s.name,
-                        maschinen=synchronous_get_all(get_maschine, s.maschinen),
-                        chargen=synchronous_get_all(get_charge, s.chargen),
+                        id=s["id"],
+                        name=s["name"],
+                        maschinen=synchronous_get_all(get_maschine, s["maschinen"]),
+                        chargen=synchronous_get_all(get_charge, s["chargen"]),
                     )
-                    for s in produktionslineto.stationen
+                    for s in produktionslineto["stationen"]
                 ],
             )
 
-            await update_produktionslinie(produktionslinie)
+            await update_produktionslinie(session, produktionslinie)
             await self.emit("produktionslinieChanged", produktionslineto, skip_sid=sid)
 
     async def on_validateProduktionslinie(
@@ -152,7 +154,7 @@ class EditorNamespace(socketio.AsyncNamespace):
 def setupWebsocket(app: FastAPI):
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=[])
     _app = socketio.ASGIApp(socketio_server=sio, socketio_path="socket.io")
-    app.mount("/ws", _app)
-    app.sio = sio
+    app.mount("/api/ws", _app)
+    app.sio = sio # type: ignore[attr-defined]
 
     sio.register_namespace(EditorNamespace("/szenarios/1/editor/"))

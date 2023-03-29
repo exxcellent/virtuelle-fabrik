@@ -178,11 +178,10 @@ async def add_produktionslinie(
 
 
 async def update_produktionslinie(
-    session: AsyncSession, produktionslinie_id, produktionslinie: Produktionslinie
+    session: AsyncSession, produktionslinie: Produktionslinie
 ) -> Produktionslinie:
-    produktionslinie_entity = await get_produktionslinie(session, produktionslinie_id)
+    produktionslinie_entity = await get_produktionslinie(session, produktionslinie.id)
 
-    produktionslinie_entity.name = produktionslinie.name
     produktionslinie_entity.stationen = list(
         [
             StationEntity(

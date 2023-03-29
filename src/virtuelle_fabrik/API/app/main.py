@@ -22,6 +22,7 @@ from virtuelle_fabrik.domain.models import (
 from virtuelle_fabrik.persistence.charge import add_charge, get_all_chargen, get_charge
 from virtuelle_fabrik.persistence.database import async_session
 from virtuelle_fabrik.persistence.maschinen import (
+    get_maschine,
     get_maschinen,
     add_maschine,
     remove_maschine,
@@ -114,6 +115,15 @@ async def read_maschinen(skip: int = 0, take: int = 20):
         result = await get_maschinen(session, skip, take)
         return [MaschineTO(**asdict(x)) for x in result]
 
+@szenario_router.get(
+    "/maschinen/{maschine_id}",
+    response_model=MaschineTO,
+    status_code=status.HTTP_200_OK,
+)
+async def read_maschine(maschine_id: str):
+    async with async_session() as session:
+        result = await get_maschine(session, maschine_id)
+        return MaschineTO(**asdict(result))
 
 @szenario_router.post(
     "/maschinen/",

@@ -84,7 +84,6 @@ async def get_maschine(session: AsyncSession, maschine_id: str) -> Maschine:
     )
     try:
         maschine_entity = query.scalars().unique().one()
-        await session.commit()
         return convert_to_maschine(maschine_entity)
     except NoResultFound:
         raise DomainException(message=f"Maschine with id {maschine_id} not found!")

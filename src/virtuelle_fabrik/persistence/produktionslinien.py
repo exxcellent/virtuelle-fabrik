@@ -115,7 +115,6 @@ async def get_produktionslinie(
     )
     try:
         produktionslinie_entity = query.scalars().unique().one()
-        await session.commit()
         return Produktionslinie(
             id=produktionslinie_entity.id,
             stationen=list(

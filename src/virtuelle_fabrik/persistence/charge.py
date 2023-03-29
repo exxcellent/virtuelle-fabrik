@@ -63,7 +63,6 @@ async def get_charge(session: AsyncSession, charge_id: str) -> Charge:
     )
     try:
         charge_entity = query.scalars().unique().one()
-        await session.commit()
         return convert_to_charge(charge_entity)
     except NoResultFound:
         raise DomainException(message=f"Charge with id {charge_id} not found!")

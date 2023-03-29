@@ -83,7 +83,6 @@ async def get_material(session: AsyncSession, material_id: str) -> Material:
     )
     try:
         m = query.scalars().one()
-        await session.commit()
         return Material(
             id=m.id,
             name=m.name,
@@ -156,7 +155,6 @@ async def get_produkt(session: AsyncSession, produkt_id: str) -> Produkt:
     )
     try:
         product_entity = query.scalars().unique().one()
-        await session.commit()
         return convert_to_produkt(product_entity)
     except NoResultFound:
         raise DomainException(message=f"Produkt with id {produkt_id} not found!")

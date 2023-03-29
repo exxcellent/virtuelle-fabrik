@@ -1,6 +1,6 @@
 from typing import List, Sequence
 from attrs import asdict
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, select
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, Table, select
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
@@ -9,6 +9,7 @@ from .database import Base
 
 from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
+    Arbeitsschritt,
     Material,
     Materialbedarf,
     Produkt,
@@ -34,7 +35,16 @@ class MaterialbedarfEntity(Base):
     menge = Column(Float)
     material_id: Mapped[str] = mapped_column(ForeignKey("material.id"))
     material: Mapped["MaterialEntity"] = relationship(lazy="joined")
-    produkt_id: Mapped[str] = mapped_column(ForeignKey("produkt.id"))
+    produkt_id: Mapped[str] = mapped_column(
+        ForeignKey("produkt.id", ondelete="CASCADE")
+    )
+
+
+class ArbeitsschrittEntity(Base):
+    __tablename__ = "arbeitsschritt"
+
+    id = Column(String, primary_key=True)
+    name = Column(String)
 
 
 class ProduktionsschrittEntity(Base):
@@ -42,7 +52,11 @@ class ProduktionsschrittEntity(Base):
 
     id = Column(String, primary_key=True)
     schritt = Column(Integer)
-    produkt_id: Mapped[str] = mapped_column(ForeignKey("produkt.id"))
+    arbeitsschritt_id: Mapped[str] = mapped_column(ForeignKey("arbeitsschritt.id"))
+    arbeitsschritt: Mapped[ArbeitsschrittEntity] = relationship(lazy="joined")
+    produkt_id: Mapped[str] = mapped_column(
+        ForeignKey("produkt.id", ondelete="CASCADE")
+    )
 
 
 class ProduktEntity(Base):
@@ -52,9 +66,13 @@ class ProduktEntity(Base):
     name = Column(String)
     verkaufspreis = Column(Float)
     produktionsschritte: Mapped[List["ProduktionsschrittEntity"]] = relationship(
-        lazy="joined"
+        lazy="joined",
+        cascade="all, delete-orphan",
     )
-    materialbedarf: Mapped[List["MaterialbedarfEntity"]] = relationship(lazy="joined")
+    materialbedarf: Mapped[List["MaterialbedarfEntity"]] = relationship(
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
 
 
 # define persistence interface + implementation here
@@ -115,13 +133,78 @@ async def remove_material(session: AsyncSession, material_id: str) -> None:
     await session.commit()
 
 
+async def get_arbeitsschritte(
+    session: AsyncSession, skip: int = 0, take: int = 20
+) -> Sequence[Arbeitsschritt]:
+    query = await session.execute(select(ArbeitsschrittEntity).offset(skip).limit(take))
+
+    return [
+        Arbeitsschritt(
+            id=entity.id,
+            name=entity.name,
+        )
+        for entity in query.scalars().all()
+    ]
+
+
+async def get_arbeitsschritt(
+    session: AsyncSession, arbeitsschritt_id: str
+) -> Arbeitsschritt:
+    query = await session.execute(
+        select(ArbeitsschrittEntity).filter(
+            ArbeitsschrittEntity.id == arbeitsschritt_id
+        )
+    )
+    try:
+        entity = query.scalars().one()
+        return Arbeitsschritt(
+            id=entity.id,
+            name=entity.name,
+        )
+    except NoResultFound:
+        raise DomainException(
+            message=f"Arbeitsschritt with id {arbeitsschritt_id} not found!"
+        )
+
+
+async def add_arbeitsschritt(
+    session: AsyncSession, arbeitsschritt: Arbeitsschritt
+) -> Arbeitsschritt:
+    new_arbeitsschritt = ArbeitsschrittEntity(
+        **asdict(arbeitsschritt),
+    )
+    session.add(new_arbeitsschritt)
+    await session.commit()
+    return arbeitsschritt
+
+
+async def remove_arbeitsschritt(session: AsyncSession, arbeitsschritt_id: str) -> None:
+    row = await session.execute(
+        select(ArbeitsschrittEntity).where(ArbeitsschrittEntity.id == arbeitsschritt_id)
+    )
+    try:
+        row = row.unique().scalar_one()
+    except NoResultFound:
+        raise DomainException(
+            message=f"Arbeitsschritt with id {arbeitsschritt_id} not found!"
+        )
+    await session.delete(row)
+    await session.commit()
+
+
 def convert_to_produkt(entity: ProduktEntity) -> Produkt:
     return Produkt(
         id=entity.id,
         name=entity.name,
         verkaufspreis=entity.verkaufspreis,
         produktionsschritte=[
-            Produktionsschritt(id=x.id, schritt=x.schritt)
+            Produktionsschritt(
+                id=x.id,
+                schritt=x.schritt,
+                arbeitsschritt=Arbeitsschritt(
+                    id=x.arbeitsschritt.id, name=x.arbeitsschritt.name
+                ),
+            )
             for x in entity.produktionsschritte
         ],
         materialbedarf=[
@@ -164,7 +247,10 @@ async def add_produkt(session: AsyncSession, produkt: Produkt) -> Produkt:
     new_produkt = ProduktEntity(
         **asdict(produkt, filter=produkt_without_relationships),
         produktionsschritte=[
-            ProduktionsschrittEntity(**asdict(x)) for x in produkt.produktionsschritte
+            ProduktionsschrittEntity(
+                id=x.id, schritt=x.schritt, arbeitsschritt_id=x.arbeitsschritt.id
+            )
+            for x in produkt.produktionsschritte
         ],
         materialbedarf=[
             MaterialbedarfEntity(id=x.id, menge=x.menge, material_id=x.material.id)

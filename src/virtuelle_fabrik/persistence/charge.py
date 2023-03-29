@@ -17,10 +17,10 @@ class ProduktbedarfEntity(Base):
     __tablename__ = "produktbedarf"
 
     id = Column(String, primary_key=True)
-    produkt_id: Mapped[str] = mapped_column(ForeignKey("produkt.id"))
+    produkt_id: Mapped[str] = mapped_column(ForeignKey("produkt.id", ondelete='CASCADE'))
     produkt: Mapped["ProduktEntity"] = relationship(lazy="joined")
     stueckzahl = Column(Integer)
-    charge_id: Mapped[str] = mapped_column(ForeignKey("charge.id"))
+    charge_id: Mapped[str] = mapped_column(ForeignKey("charge.id", ondelete='CASCADE'))
 
 
 class ChargeEntity(Base):

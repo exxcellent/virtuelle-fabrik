@@ -39,8 +39,14 @@ class Materialbedarf:
   menge: float
 
 @define
+class Arbeitsschritt:
+  id: str
+  name: str
+
+@define
 class Produktionsschritt:
   id: str
+  arbeitsschritt: Arbeitsschritt
   schritt: int
 
 @define

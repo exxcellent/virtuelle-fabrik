@@ -10,6 +10,7 @@ from pydantic import BaseConfig, BaseModel
 
 from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
+    Arbeitsschritt,
     Charge,
     Maschine,
     MaschinenBefaehigung,
@@ -28,12 +29,16 @@ from virtuelle_fabrik.persistence.maschinen import (
     remove_maschine,
 )
 from virtuelle_fabrik.persistence.produkte import (
+    add_arbeitsschritt,
     add_material,
     add_produkt,
     get_all_material,
     get_all_produkte,
+    get_arbeitsschritt,
+    get_arbeitsschritte,
     get_material,
     get_produkt,
+    remove_arbeitsschritt,
     remove_material,
 )
 from .socket_handlers import setupWebsocket
@@ -115,6 +120,7 @@ async def read_maschinen(skip: int = 0, take: int = 20):
         result = await get_maschinen(session, skip, take)
         return [MaschineTO(**asdict(x)) for x in result]
 
+
 @szenario_router.get(
     "/maschinen/{maschine_id}",
     response_model=MaschineTO,
@@ -124,6 +130,7 @@ async def read_maschine(maschine_id: str):
     async with async_session() as session:
         result = await get_maschine(session, maschine_id)
         return MaschineTO(**asdict(result))
+
 
 @szenario_router.post(
     "/maschinen/",
@@ -220,12 +227,75 @@ async def delete_material(material_id: str):
         }
 
 
+class ArbeitsschrittIn(APIModel):
+    name: str
+
+
+class ArbeitsschrittTO(APIModel):
+    id: str
+    name: str
+
+
+@szenario_router.get(
+    "/arbeitsschritte/",
+    response_model=List[ArbeitsschrittTO],
+    status_code=status.HTTP_200_OK,
+)
+async def read_all_arbeitsschritte(skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        result = await get_arbeitsschritte(session, skip, take)
+        return [ArbeitsschrittTO(**asdict(x)) for x in result]
+
+
+@szenario_router.get(
+    "/arbeitsschritte/{arbeitsschritt_id}",
+    response_model=ArbeitsschrittTO,
+    status_code=status.HTTP_200_OK,
+)
+async def read_arbeitsschritt(arbeitsschritt_id: str):
+    async with async_session() as session:
+        result = await get_arbeitsschritt(session, arbeitsschritt_id)
+        return ArbeitsschrittTO(**asdict(result))
+
+
+@szenario_router.post(
+    "/arbeitsschritte/",
+    response_model=ArbeitsschrittTO,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_arbeitsschritt(arbeitsschritt: ArbeitsschrittIn):
+    async with async_session() as session:
+        result = await add_arbeitsschritt(
+            session,
+            Arbeitsschritt(
+                id=uuid.uuid4().hex,
+                **arbeitsschritt.dict(),
+            ),
+        )
+        return ArbeitsschrittTO(**asdict(result))
+
+
+@szenario_router.delete(
+    "/arbeitsschritte/{arbeitsschritt_id}/", status_code=status.HTTP_200_OK
+)
+async def delete_arbeitsschritt(arbeitsschritt_id: str):
+    async with async_session() as session:
+        await remove_arbeitsschritt(session, arbeitsschritt_id)
+        return {
+            "message": "Material with id: {} deleted successfully!".format(
+                arbeitsschritt_id
+            )
+        }
+
+
 class ProduktionsschrittIn(APIModel):
+    arbeitsschritt_id: str
     schritt: int
 
 
 class ProduktionsschrittTO(APIModel):
     id: str
+    arbeitsschritt_id: str
     schritt: int
 
 
@@ -261,7 +331,10 @@ def convert_to_produktto(produkt: Produkt) -> ProduktTO:
         name=produkt.name,
         verkaufspreis=produkt.verkaufspreis,
         produktionsschritte=[
-            ProduktionsschrittTO(**asdict(x)) for x in produkt.produktionsschritte
+            ProduktionsschrittTO(
+                id=x.id, schritt=x.schritt, arbeitsschritt_id=x.arbeitsschritt.id
+            )
+            for x in produkt.produktionsschritte
         ],
         materialbedarf=[
             MaterialbedarfTO(id=x.id, material_id=x.material.id, menge=x.menge)
@@ -306,7 +379,13 @@ async def create_produkt(szenario_id: str, produkt: ProduktIn):
                 name=produkt.name,
                 verkaufspreis=produkt.verkaufspreis,
                 produktionsschritte=[
-                    Produktionsschritt(id=uuid.uuid4().hex, **x.dict())
+                    Produktionsschritt(
+                        id=uuid.uuid4().hex,
+                        arbeitsschritt=await get_arbeitsschritt(
+                            session, x.arbeitsschritt_id
+                        ),
+                        schritt=x.schritt,
+                    )
                     for x in produkt.produktionsschritte
                 ],
                 materialbedarf=[

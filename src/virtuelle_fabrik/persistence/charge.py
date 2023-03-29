@@ -44,7 +44,7 @@ def convert_to_charge(entity: ChargeEntity) -> Charge:
             Produktbedarf(
                 id=x.id, produkt=convert_to_produkt(x.produkt), stueckzahl=x.stueckzahl
             )
-            for x in entity.produktionsschritte
+            for x in entity.produktbedarf
         ],
     )
 

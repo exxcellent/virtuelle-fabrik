@@ -32,10 +32,10 @@ class StationEntity(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     maschinen: Mapped[List["MaschineEntity"]] = relationship(
-        secondary=station_maschine_association_table
+        secondary=station_maschine_association_table, lazy="joined"
     )
     chargen: Mapped[List["ChargeEntity"]] = relationship(
-        secondary=station_charge_association_table
+        secondary=station_charge_association_table, lazy="joined"
     )
     produktionslinie_id: Mapped[str] = mapped_column(ForeignKey("produktionslinien.id"))
 
@@ -135,16 +135,42 @@ async def get_produktionslinie(
         )
 
 
+async def get_maschine_entities(session: AsyncSession, maschine_ids: List[str]):
+    query = await session.execute(
+        select(MaschineEntity).filter(MaschineEntity.id.in_(maschine_ids))
+    )
+    return query.scalars().unique().all()
+
+
+async def get_charge_entities(session: AsyncSession, chargen_ids: List[str]):
+    query = await session.execute(
+        select(ChargeEntity).filter(ChargeEntity.id.in_(chargen_ids))
+    )
+    return query.scalars().unique().all()
+
+
 async def add_produktionslinie(
     session: AsyncSession, produktionslinie: Produktionslinie
 ) -> Produktionslinie:
     new_produktionslinie = ProduktionslinieEntity(
         id=produktionslinie.id,
-        name=produktionslinie.name,
-        maschinen=list(
-            [get_maschine(session, x.id) for x in produktionslinie.maschinen]
+        stationen=list(
+            [
+                StationEntity(
+                    id=s.id,
+                    name=s.name,
+                    maschinen=await get_maschine_entities(
+                        session,
+                        [x.id for x in s.maschinen],
+                    ),
+                    chargen=await get_charge_entities(
+                        session,
+                        [x.id for x in s.chargen],
+                    ),
+                )
+                for s in produktionslinie.stationen
+            ]
         ),
-        chargen=list([get_charge(session, x.id) for x in produktionslinie.chargen]),
     )
     session.add(new_produktionslinie)
     await session.commit()
@@ -157,11 +183,22 @@ async def update_produktionslinie(
     produktionslinie_entity = await get_produktionslinie(session, produktionslinie_id)
 
     produktionslinie_entity.name = produktionslinie.name
-    produktionslinie_entity.maschinen = list(
-        [get_maschine(session, x.id) for x in produktionslinie.maschinen]
-    )
-    produktionslinie_entity.chargen = list(
-        [get_charge(session, x.id) for x in produktionslinie.chargen]
+    produktionslinie_entity.stationen = list(
+        [
+            StationEntity(
+                id=s.id,
+                name=s.name,
+                maschinen=await get_maschine_entities(
+                    session,
+                    [x.id for x in s.maschinen],
+                ),
+                chargen=await get_charge_entities(
+                    session,
+                    [x.id for x in s.chargen],
+                ),
+            )
+            for s in produktionslinie.stationen
+        ]
     )
 
     await session.commit()

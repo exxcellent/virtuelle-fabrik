@@ -13,6 +13,7 @@ from virtuelle_fabrik.persistence.database import async_session
 from virtuelle_fabrik.persistence.maschinen import get_maschine
 from virtuelle_fabrik.persistence.produktionslinien import (
     add_produktionslinie,
+    get_or_create_produktionslinie,
     update_produktionslinie,
 )
 
@@ -37,6 +38,7 @@ class EditorNotification:
 class StationTO:
     id: str
     name: str
+    order: int
     maschinen: List[str]
     chargen: List[str]
 
@@ -56,6 +58,7 @@ def convert_to_produktionslinieto(
             StationTO(
                 id=x.id,
                 name=x.name,
+                order=x.order,
                 maschinen=list([m.id for m in x.maschinen]),
                 chargen=list([c.id for c in x.chargen]),
             )
@@ -66,6 +69,8 @@ def convert_to_produktionslinieto(
 
 class EditorNamespace(socketio.AsyncNamespace):
     _task: asyncio.Task | None = None
+
+    _id: str = "1"
 
     async def run_optimization(self):
         # TODO: Actually do some optimization stuff
@@ -94,9 +99,7 @@ class EditorNamespace(socketio.AsyncNamespace):
                 "produktionslinieChanged",
                 asdict(
                     convert_to_produktionslinieto(
-                        await add_produktionslinie(
-                            session, Produktionslinie(id=uuid.uuid4().hex, stationen=[])
-                        )
+                        await get_or_create_produktionslinie(session, self._id)
                     ),
                 ),
             )
@@ -104,14 +107,14 @@ class EditorNamespace(socketio.AsyncNamespace):
     def on_disconnect(self, sid):
         pass
 
-    async def on_changeProduktionslinie(
-        self, sid, produktionslineto: dict
-    ):
+    async def on_changeProduktionslinie(self, sid, produktionslineto: dict):
         async with async_session() as session:
 
             def synchronous_get_all(getter, list):
                 results = [getter(session, x) for x in list]
                 return asyncio.gather(*results)
+
+            print(produktionslineto)            
 
             produktionslinie = Produktionslinie(
                 id=produktionslineto["id"],
@@ -119,8 +122,9 @@ class EditorNamespace(socketio.AsyncNamespace):
                     Station(
                         id=s["id"],
                         name=s["name"],
-                        maschinen=synchronous_get_all(get_maschine, s["maschinen"]),
-                        chargen=synchronous_get_all(get_charge, s["chargen"]),
+                        order=s["order"],
+                        maschinen=await synchronous_get_all(get_maschine, s["maschinen"]),
+                        chargen=await synchronous_get_all(get_charge, s["chargen"]),
                     )
                     for s in produktionslineto["stationen"]
                 ],
@@ -135,7 +139,7 @@ class EditorNamespace(socketio.AsyncNamespace):
         # TODO: actually validate incoming produktionslinie
         return []
 
-    async def on_startSimulation(self, sid, produktionslinieto: ProduktionslinieTO):
+    async def on_startSimulation(self, sid, produktionslinieto: dict):
         if self._task and not self._task.cancelled():
             self._task.cancel()
 
@@ -155,6 +159,6 @@ def setupWebsocket(app: FastAPI):
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=[])
     _app = socketio.ASGIApp(socketio_server=sio, socketio_path="socket.io")
     app.mount("/api/ws", _app)
-    app.sio = sio # type: ignore[attr-defined]
+    app.sio = sio  # type: ignore[attr-defined]
 
     sio.register_namespace(EditorNamespace("/szenarios/1/editor/"))

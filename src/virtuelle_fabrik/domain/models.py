@@ -79,6 +79,7 @@ class Charge:
 class Station:
   id: str
   name: str
+  order: int
   maschinen: List[Maschine]
   chargen: List[Charge]
 

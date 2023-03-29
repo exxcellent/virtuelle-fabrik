@@ -49,7 +49,7 @@ app.add_middleware(
 
 setupWebsocket(app)
 
-szenario_router = APIRouter(prefix="/szenario/{szenario_id}")
+szenario_router = APIRouter(prefix="/api/szenarios/{szenario_id}")
 
 
 def to_lower_camel(string: str) -> str:
@@ -105,7 +105,7 @@ async def domain_exception_handler(request: Request, exc: DomainException):
 
 
 @szenario_router.get(
-    "maschinen/",
+    "/maschinen/",
     response_model=List[MaschineTO],
     status_code=status.HTTP_200_OK,
 )
@@ -116,7 +116,7 @@ async def read_maschinen(skip: int = 0, take: int = 20):
 
 
 @szenario_router.post(
-    "maschinen/",
+    "/maschinen/",
     response_model=MaschineTO,
     status_code=status.HTTP_201_CREATED,
 )
@@ -138,7 +138,7 @@ async def create_maschine(maschine: MaschineIn):
         return MaschineTO(**asdict(result))
 
 
-@szenario_router.delete("maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("/maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
 async def delete_maschine(maschine_id: str):
     async with async_session() as session:
         await remove_maschine(session, maschine_id)
@@ -163,7 +163,7 @@ class MaterialTO(APIModel):
 
 
 @szenario_router.get(
-    "/material/",
+    "/materialien/",
     response_model=List[MaterialTO],
     status_code=status.HTTP_200_OK,
 )
@@ -174,7 +174,7 @@ async def read_all_material(skip: int = 0, take: int = 20):
 
 
 @szenario_router.get(
-    "/material/{material_id}",
+    "/materialien/{material_id}",
     response_model=MaterialTO,
     status_code=status.HTTP_200_OK,
 )
@@ -185,7 +185,7 @@ async def read_material(material_id: str):
 
 
 @szenario_router.post(
-    "/material/",
+    "/materialien/",
     response_model=MaterialTO,
     status_code=status.HTTP_201_CREATED,
 )
@@ -201,7 +201,7 @@ async def create_material(material: MaterialIn):
         return MaterialTO(**asdict(result))
 
 
-@szenario_router.delete("/material/{material_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("/materialien/{material_id}/", status_code=status.HTTP_200_OK)
 async def delete_material(material_id: str):
     async with async_session() as session:
         await remove_material(session, material_id)
@@ -350,7 +350,7 @@ def convert_to_chargeto(charge: Charge) -> ChargeTO:
 
 
 @szenario_router.get(
-    "/charge/",
+    "/chargen/",
     response_model=List[ChargeTO],
     status_code=status.HTTP_200_OK,
 )
@@ -361,7 +361,7 @@ async def read_all_chargen(szenario_id: str, skip: int = 0, take: int = 20):
 
 
 @szenario_router.get(
-    "/charge/{charge_id}",
+    "/chargen/{charge_id}",
     response_model=ChargeTO,
     status_code=status.HTTP_200_OK,
 )
@@ -372,7 +372,7 @@ async def read_charge(szenario_id: str, charge_id: str):
 
 
 @szenario_router.post(
-    "/charge/",
+    "/chargen/",
     response_model=ChargeTO,
     status_code=status.HTTP_201_CREATED,
 )

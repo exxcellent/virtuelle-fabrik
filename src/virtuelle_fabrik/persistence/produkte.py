@@ -260,3 +260,14 @@ async def add_produkt(session: AsyncSession, produkt: Produkt) -> Produkt:
     session.add(new_produkt)
     await session.commit()
     return produkt
+
+async def remove_produkt(session: AsyncSession, produkt_id: str) -> None:
+    row = await session.execute(
+        select(ProduktEntity).where(ProduktEntity.id == produkt_id)
+    )
+    try:
+        row = row.unique().scalar_one()
+    except NoResultFound:
+        raise DomainException(message=f"Produkt with id {produkt_id} not found!")
+    await session.delete(row)
+    await session.commit()

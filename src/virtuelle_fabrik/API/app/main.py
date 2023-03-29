@@ -20,7 +20,12 @@ from virtuelle_fabrik.domain.models import (
     Produktbedarf,
     Produktionsschritt,
 )
-from virtuelle_fabrik.persistence.charge import add_charge, get_all_chargen, get_charge
+from virtuelle_fabrik.persistence.charge import (
+    add_charge,
+    get_all_chargen,
+    get_charge,
+    remove_charge,
+)
 from virtuelle_fabrik.persistence.database import async_session
 from virtuelle_fabrik.persistence.maschinen import (
     get_maschine,
@@ -40,6 +45,7 @@ from virtuelle_fabrik.persistence.produkte import (
     get_produkt,
     remove_arbeitsschritt,
     remove_material,
+    remove_produkt,
 )
 from .socket_handlers import setupWebsocket
 
@@ -155,7 +161,7 @@ async def create_maschine(maschine: MaschineIn):
         return MaschineTO(**asdict(result))
 
 
-@szenario_router.delete("/maschinen/{maschine_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("/maschinen/{maschine_id}", status_code=status.HTTP_200_OK)
 async def delete_maschine(maschine_id: str):
     async with async_session() as session:
         await remove_maschine(session, maschine_id)
@@ -218,7 +224,7 @@ async def create_material(material: MaterialIn):
         return MaterialTO(**asdict(result))
 
 
-@szenario_router.delete("/materialien/{material_id}/", status_code=status.HTTP_200_OK)
+@szenario_router.delete("/materialien/{material_id}", status_code=status.HTTP_200_OK)
 async def delete_material(material_id: str):
     async with async_session() as session:
         await remove_material(session, material_id)
@@ -276,13 +282,13 @@ async def create_arbeitsschritt(arbeitsschritt: ArbeitsschrittIn):
 
 
 @szenario_router.delete(
-    "/arbeitsschritte/{arbeitsschritt_id}/", status_code=status.HTTP_200_OK
+    "/arbeitsschritte/{arbeitsschritt_id}", status_code=status.HTTP_200_OK
 )
 async def delete_arbeitsschritt(arbeitsschritt_id: str):
     async with async_session() as session:
         await remove_arbeitsschritt(session, arbeitsschritt_id)
         return {
-            "message": "Material with id: {} deleted successfully!".format(
+            "message": "Arbeitsschritt with id: {} deleted successfully!".format(
                 arbeitsschritt_id
             )
         }
@@ -402,6 +408,15 @@ async def create_produkt(szenario_id: str, produkt: ProduktIn):
         return convert_to_produktto(result)
 
 
+@szenario_router.delete("/produkte/{produkt_id}", status_code=status.HTTP_200_OK)
+async def delete_produkt(produkt_id: str):
+    async with async_session() as session:
+        await remove_produkt(session, produkt_id)
+        return {
+            "message": "Produkt with id: {} deleted successfully!".format(produkt_id)
+        }
+
+
 class ProduktbedarfIn(APIModel):
     produkt_id: str
     stueckzahl: int
@@ -485,6 +500,13 @@ async def create_charge(szenario_id: str, charge: ChargeIn):
         )
 
         return convert_to_chargeto(result)
+
+
+@szenario_router.delete("/chargen/{charge_id}", status_code=status.HTTP_200_OK)
+async def delete_charge(charge_id: str):
+    async with async_session() as session:
+        await remove_charge(session, charge_id)
+        return {"message": "Charge with id: {} deleted successfully!".format(charge_id)}
 
 
 app.include_router(szenario_router)

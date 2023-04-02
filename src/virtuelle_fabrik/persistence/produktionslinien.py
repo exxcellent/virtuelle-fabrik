@@ -3,7 +3,7 @@ from typing import List, Sequence
 import uuid
 from attr import asdict
 from sqlalchemy import Column, Integer, String, ForeignKey, Table, select
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import relationship, mapped_column, Mapped, backref
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
 
@@ -13,19 +13,14 @@ from .charge import ChargeEntity, convert_to_charge, get_charge
 
 from virtuelle_fabrik.domain.models import Produktionslinie, Station
 from virtuelle_fabrik.domain.exception import DomainException
+from virtuelle_fabrik.persistence.association import station_maschine_association_table
 
-station_maschine_association_table = Table(
-    "station_maschine_association_table",
-    Base.metadata,
-    Column("station_id", ForeignKey("stationen.id"), primary_key=True),
-    Column("maschine_id", ForeignKey("maschinen.id"), primary_key=True),
-)
 
 station_charge_association_table = Table(
     "station_charge_association_table",
     Base.metadata,
-    Column("station_id", ForeignKey("stationen.id"), primary_key=True),
-    Column("charge_id", ForeignKey("charge.id"), primary_key=True),
+    Column("station_id", String, ForeignKey("stationen.id"), primary_key=True),
+    Column("charge_id", String, ForeignKey("charge.id"), primary_key=True),
 )
 
 
@@ -34,7 +29,7 @@ class StationEntity(Base):
 
     id = Column(String, primary_key=True)
     name = Column(String)
-    order = Column(Integer)
+    order = Column(Integer, nullable=False)
     maschinen: Mapped[List["MaschineEntity"]] = relationship(
         secondary=station_maschine_association_table, lazy="joined"
     )
@@ -48,7 +43,9 @@ class ProduktionslinieEntity(Base):
     __tablename__ = "produktionslinien"
 
     id = Column(String, primary_key=True)
-    stationen: Mapped[List["StationEntity"]] = relationship(lazy="joined", cascade="all, delete-orphan")
+    stationen: Mapped[List["StationEntity"]] = relationship(
+        lazy="joined", cascade="all, delete-orphan"
+    )
 
 
 # define persistence interface + implementation here

@@ -6,25 +6,37 @@ import os
 sys.path.insert(0, os.getcwd())
 
 from virtuelle_fabrik.domain.models import (
+    Arbeitsschritt,
+    Charge,
     Maschine,
     MaschinenBefaehigung,
     Material,
     Materialbedarf,
     Produkt,
+    Produktbedarf,
+    Produktionslinie,
     Produktionsschritt,
+    Station,
 )
-from virtuelle_fabrik.optimization.controller import costs_per_product_optimization
+from virtuelle_fabrik.optimization.controller import (
+    calc_optimization,
+    costs_per_product_optimization,
+)
 
 
 def sample_optimization():
+    arbeitsschritte = [
+        Arbeitsschritt(id="1", name="Sägen"),
+        Arbeitsschritt(id="2", name="Härter Sägen"),
+    ]
     # create some produkt and machines
     produkt = Produkt(
         id="1",
         name="Tisch",
         verkaufspreis=500,
         produktionsschritte=[
-            Produktionsschritt(id="1", schritt=1),
-            Produktionsschritt(id="2", schritt=2),
+            Produktionsschritt(id="1", arbeitsschritt=arbeitsschritte[0], schritt=1),
+            Produktionsschritt(id="2", arbeitsschritt=arbeitsschritte[1], schritt=2),
         ],
         materialbedarf=[
             Materialbedarf(
@@ -39,6 +51,13 @@ def sample_optimization():
                 menge=5.0,
             )
         ],
+    )
+
+    charge = Charge(
+        id="1",
+        prioritaet=0,
+        name="Tische",
+        produktbedarf=[Produktbedarf(id="1", produkt=produkt, stueckzahl=1000)],
     )
 
     maschinen = [
@@ -104,6 +123,19 @@ def sample_optimization():
         ),
     ]
 
+    produktionslinie = Produktionslinie(
+        id="1",
+        stationen=[
+            Station(
+                id="1",
+                name="Neue Statione",
+                order=0,
+                maschinen=maschinen,
+                chargen=[charge],
+            )
+        ],
+    )
+
     result = costs_per_product_optimization(produkt, maschinen)
     print(
         "\nCosts per product:",
@@ -123,5 +155,6 @@ def sample_optimization():
             round(result.x[i], 2),
         )
 
+    opt = calc_optimization(produktionslinie, maschinen, arbeitsschritte)
 
 sample_optimization()

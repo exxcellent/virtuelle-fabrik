@@ -12,10 +12,14 @@ from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
     Arbeitsschritt,
     Charge,
+    LeistungsErgebnis,
     Maschine,
     MaschinenBefaehigung,
+    Maschinenauslastung,
     Material,
     Materialbedarf,
+    Optimierung,
+    OptimierungsErgebnis,
     Produkt,
     Produktbedarf,
     Produktionsschritt,
@@ -507,6 +511,67 @@ async def delete_charge(charge_id: str):
     async with async_session() as session:
         await remove_charge(session, charge_id)
         return {"message": "Charge with id: {} deleted successfully!".format(charge_id)}
+
+
+
+class MaschinenauslastungTO(APIModel):
+    maschine: str
+    arbeitsschritt: str
+    auslastung: float
+
+
+class LeistungsErgebnisTO(APIModel):
+    kosten_produkt: float
+    maschinenauslastung: List[MaschinenauslastungTO]
+
+
+class OptimierungsErgebnisTO(APIModel):
+    station: str
+    gegeben: LeistungsErgebnisTO
+    optimiert: LeistungsErgebnisTO
+
+
+class OptimierungTO(APIModel):
+    id: str
+    ausfuehrung: str
+    produktionslinie: str
+    stationen: List[OptimierungsErgebnisTO]
+
+
+def convert_to_maschinenauslastungto(obj: Maschinenauslastung):
+    return MaschinenauslastungTO(
+        maschine=obj.maschine.id,
+        arbeitsschritt=obj.arbeitsschritt.id,
+        auslastung=obj.auslastung,
+    )
+
+
+def convert_to_leistungsergebnisto(obj: LeistungsErgebnis):
+    return LeistungsErgebnisTO(
+        kosten_produkt=obj.kosten_produkt,
+        maschinenauslastung=[
+            convert_to_maschinenauslastungto(a) for a in obj.maschinenauslastung
+        ],
+    )
+
+
+def convert_to_optimierungsergebnisto(obj: OptimierungsErgebnis):
+    return OptimierungsErgebnisTO(
+        station=obj.station.id,
+        gegeben=convert_to_leistungsergebnisto(obj.gegeben),
+        optimiert=convert_to_leistungsergebnisto(obj.optimiert),
+    )
+
+
+def convert_to_optimizationto(obj: Optimierung):
+    return OptimierungTO(
+        id=obj.id,
+        ausfuehrung=obj.ausfuehrung,
+        produktionslinie=obj.produktionslinie.id,
+        stationen=[convert_to_optimierungsergebnisto(s) for s in obj.stationen],
+    )
+
+
 
 
 app.include_router(szenario_router)

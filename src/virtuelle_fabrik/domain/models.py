@@ -8,6 +8,7 @@ class MaschinenBefaehigung:
     schritt_id: str
     taktrate: float
 
+
 @define
 class Maschine:
     id: str
@@ -26,36 +27,40 @@ def no_maschinenbefaehigungen(a, _):
 
 @define
 class Material:
-  id: str
-  name: str
-  kosten_stueck: float
-  bestand: float
-  aufstocken_minute: float
+    id: str
+    name: str
+    kosten_stueck: float
+    bestand: float
+    aufstocken_minute: float
+
 
 @define
 class Materialbedarf:
-  id: str
-  material: Material
-  menge: float
+    id: str
+    material: Material
+    menge: float
+
 
 @define
 class Arbeitsschritt:
-  id: str
-  name: str
+    id: str
+    name: str
+
 
 @define
 class Produktionsschritt:
-  id: str
-  arbeitsschritt: Arbeitsschritt
-  schritt: int
+    id: str
+    arbeitsschritt: Arbeitsschritt
+    schritt: int
+
 
 @define
 class Produkt:
-  id: str
-  name: str
-  verkaufspreis: float
-  produktionsschritte: List[Produktionsschritt]
-  materialbedarf: List[Materialbedarf]
+    id: str
+    name: str
+    verkaufspreis: float
+    produktionsschritte: List[Produktionsschritt]
+    materialbedarf: List[Materialbedarf]
 
 
 def produkt_without_relationships(a, _):
@@ -64,27 +69,57 @@ def produkt_without_relationships(a, _):
 
 @define
 class Produktbedarf:
-  id: str
-  produkt: Produkt
-  stueckzahl: int
+    id: str
+    produkt: Produkt
+    stueckzahl: int
+
 
 @define
 class Charge:
-  id: str
-  name: str
-  prioritaet: int
-  produktbedarf: List[Produktbedarf]
+    id: str
+    name: str
+    prioritaet: int
+    produktbedarf: List[Produktbedarf]
+
 
 @define
 class Station:
-  id: str
-  name: str
-  order: int
-  maschinen: List[Maschine]
-  chargen: List[Charge]
+    id: str
+    name: str
+    order: int
+    maschinen: List[Maschine]
+    chargen: List[Charge]
+
 
 @define
 class Produktionslinie:
-  id: str
-  stationen: List[Station]
+    id: str
+    stationen: List[Station]
 
+
+@define
+class Maschinenauslastung:
+    maschine: Maschine
+    arbeitsschritt: Arbeitsschritt
+    auslastung: float
+
+
+@define
+class LeistungsErgebnis:
+    kosten_produkt: float
+    maschinenauslastung: List[Maschinenauslastung]
+
+
+@define
+class OptimierungsErgebnis:
+    station: Station
+    gegeben: LeistungsErgebnis
+    optimiert: LeistungsErgebnis
+
+
+@define
+class Optimierung:
+    id: str
+    ausfuehrung: str
+    produktionslinie: Produktionslinie
+    stationen: List[OptimierungsErgebnis]

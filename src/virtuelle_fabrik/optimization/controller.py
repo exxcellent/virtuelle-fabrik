@@ -61,11 +61,11 @@ def calc_optimized(
         for schritt, maschinen in opt.m_mapping.items()
         for maschine in maschinen
     }
-    
+
     auslastungen = [
         Maschinenauslastung(
             maschine=m,
-            arbeitsschritt=arbeitsschritte_dict[m.id],
+            arbeitsschritt=arbeitsschritte_dict.get(m.id, None),
             auslastung=round(opt.x[i], 2),
         )
         for i, m in enumerate(maschinen)

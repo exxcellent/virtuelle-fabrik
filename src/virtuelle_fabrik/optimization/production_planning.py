@@ -40,7 +40,7 @@ def create_production_frequency_estimator(
 
     produktionsschritt_id_to_maschine_mapping = dict(
         {
-            ps.arbeitsschritt.id: get_maschine_for_step(ps.id)
+            ps.arbeitsschritt.id: get_maschine_for_step(ps.arbeitsschritt.id)
             for ps in produkt.produktionsschritte
         }
     )

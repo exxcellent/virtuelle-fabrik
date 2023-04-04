@@ -1,10 +1,11 @@
-from typing import Sequence
+from typing import Sequence, List
 from attrs import asdict
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, delete, select
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, delete, select 
+from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from virtuelle_fabrik.persistence.association import station_maschine_association_table
 from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
     Maschine,
@@ -31,6 +32,12 @@ class MaschineEntity(Base):
         lazy="joined",
         cascade="all, delete-orphan",
         back_populates="maschine",
+    )
+
+    stationen = relationship(
+        "StationEntity",
+        secondary=station_maschine_association_table,
+        lazy="joined",
     )
 
 

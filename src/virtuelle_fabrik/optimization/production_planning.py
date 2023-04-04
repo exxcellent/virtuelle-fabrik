@@ -40,7 +40,7 @@ def create_production_frequency_estimator(
 
     produktionsschritt_id_to_maschine_mapping = dict(
         {
-            ps.id: get_maschine_for_step(ps.id)
+            ps.arbeitsschritt.id: get_maschine_for_step(ps.arbeitsschritt.id)
             for ps in produkt.produktionsschritte
         }
     )
@@ -68,7 +68,7 @@ def create_production_frequency_estimator(
                 current_lowest_frequency = step_freq
         return current_lowest_frequency
 
-    return production_frequency
+    return production_frequency, produktionsschritt_id_to_maschine_mapping
 
 
 def create_total_costs_estimator(machine_list: List[Maschine]):
@@ -113,7 +113,7 @@ def create_costs_per_product_estimator(produkt: Produkt, machine_list: List[Masc
     :return: Returns the costs per product
     :rtype: float
     """
-    production_frequency = create_production_frequency_estimator(produkt, machine_list)
+    (production_frequency, produktionsschritt_id_to_maschine_mapping) = create_production_frequency_estimator(produkt, machine_list)
     total_costs = create_total_costs_estimator(machine_list)
 
     def costs_per_product(x: List[float]):
@@ -126,4 +126,4 @@ def create_costs_per_product_estimator(produkt: Produkt, machine_list: List[Masc
         """
         return total_costs(x) / production_frequency(x)
 
-    return costs_per_product
+    return costs_per_product, produktionsschritt_id_to_maschine_mapping

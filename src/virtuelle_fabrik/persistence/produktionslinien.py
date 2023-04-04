@@ -1,6 +1,9 @@
+import asyncio
 from typing import List, Sequence
-from sqlalchemy import Column, String, ForeignKey, Table, select
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+import uuid
+from attr import asdict
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, select
+from sqlalchemy.orm import relationship, mapped_column, Mapped, backref
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
 
@@ -10,19 +13,14 @@ from .charge import ChargeEntity, convert_to_charge, get_charge
 
 from virtuelle_fabrik.domain.models import Produktionslinie, Station
 from virtuelle_fabrik.domain.exception import DomainException
+from virtuelle_fabrik.persistence.association import station_maschine_association_table
 
-station_maschine_association_table = Table(
-    "station_maschine_association_table",
-    Base.metadata,
-    Column("station_id", ForeignKey("stationen.id"), primary_key=True),
-    Column("maschine_id", ForeignKey("maschinen.id"), primary_key=True),
-)
 
 station_charge_association_table = Table(
     "station_charge_association_table",
     Base.metadata,
-    Column("station_id", ForeignKey("stationen.id"), primary_key=True),
-    Column("charge_id", ForeignKey("charge.id"), primary_key=True),
+    Column("station_id", String, ForeignKey("stationen.id"), primary_key=True),
+    Column("charge_id", String, ForeignKey("charge.id"), primary_key=True),
 )
 
 
@@ -31,6 +29,7 @@ class StationEntity(Base):
 
     id = Column(String, primary_key=True)
     name = Column(String)
+    order = Column(Integer, nullable=False)
     maschinen: Mapped[List["MaschineEntity"]] = relationship(
         secondary=station_maschine_association_table, lazy="joined"
     )
@@ -44,7 +43,9 @@ class ProduktionslinieEntity(Base):
     __tablename__ = "produktionslinien"
 
     id = Column(String, primary_key=True)
-    stationen: Mapped[List["StationEntity"]] = relationship(lazy="joined")
+    stationen: Mapped[List["StationEntity"]] = relationship(
+        lazy="joined", cascade="all, delete-orphan"
+    )
 
 
 # define persistence interface + implementation here
@@ -83,6 +84,7 @@ async def add_station(session: AsyncSession, station: Station) -> Station:
     new_station = StationEntity(
         id=station.id,
         name=station.name,
+        order=station.order,
         maschinen=list([get_maschine(session, x.id) for x in station.maschinen]),
         chargen=list([get_charge(session, x.id) for x in station.chargen]),
     )
@@ -105,6 +107,21 @@ async def remove_station(session: AsyncSession, station_id: str) -> None:
     await session.commit()
 
 
+async def get_or_create_produktionslinie(
+    session: AsyncSession, produktionslinie_id: str
+) -> Produktionslinie:
+    try:
+        return await get_produktionslinie(session, produktionslinie_id)
+
+    except DomainException:
+        produktionslinie = Produktionslinie(id=produktionslinie_id, stationen=[])
+
+        session.add(ProduktionslinieEntity(**asdict(produktionslinie)))
+        await session.commit()
+
+        return produktionslinie
+
+
 async def get_produktionslinie(
     session: AsyncSession, produktionslinie_id: str
 ) -> Produktionslinie:
@@ -122,6 +139,7 @@ async def get_produktionslinie(
                     Station(
                         id=x.id,
                         name=x.name,
+                        order=x.order,
                         maschinen=list([convert_to_maschine(m) for m in x.maschinen]),
                         chargen=list([convert_to_charge(c) for c in x.chargen]),
                     )
@@ -159,6 +177,7 @@ async def add_produktionslinie(
                 StationEntity(
                     id=s.id,
                     name=s.name,
+                    order=s.order,
                     maschinen=await get_maschine_entities(
                         session,
                         [x.id for x in s.maschinen],
@@ -178,28 +197,41 @@ async def add_produktionslinie(
 
 
 async def update_produktionslinie(
-    session: AsyncSession, produktionslinie_id, produktionslinie: Produktionslinie
+    session: AsyncSession, produktionslinie: Produktionslinie
 ) -> Produktionslinie:
-    produktionslinie_entity = await get_produktionslinie(session, produktionslinie_id)
+    print(produktionslinie)
 
-    produktionslinie_entity.name = produktionslinie.name
-    produktionslinie_entity.stationen = list(
-        [
-            StationEntity(
-                id=s.id,
-                name=s.name,
-                maschinen=await get_maschine_entities(
-                    session,
-                    [x.id for x in s.maschinen],
-                ),
-                chargen=await get_charge_entities(
-                    session,
-                    [x.id for x in s.chargen],
-                ),
-            )
-            for s in produktionslinie.stationen
-        ]
+    produktionslinie_entity = await session.get(
+        ProduktionslinieEntity, produktionslinie.id
     )
+
+    if not produktionslinie_entity:
+        raise DomainException(
+            message=f"Produktionslinie with id {produktionslinie.id} not found!"
+        )
+
+    stationen = [
+        StationEntity(
+            id=s.id,
+            name=s.name,
+            order=s.order,
+            maschinen=await get_maschine_entities(
+                session,
+                [x.id for x in s.maschinen],
+            ),
+            chargen=await get_charge_entities(
+                session,
+                [x.id for x in s.chargen],
+            ),
+        )
+        for s in produktionslinie.stationen
+    ]
+
+    stationen = await asyncio.gather(*[session.merge(s) for s in stationen])
+
+    produktionslinie_entity.stationen = list(stationen)
+
+    await session.merge(produktionslinie_entity)
 
     await session.commit()
     return produktionslinie

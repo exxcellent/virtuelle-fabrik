@@ -6,13 +6,19 @@ from fastapi import FastAPI
 import socketio
 import asyncio
 
-from virtuelle_fabrik.domain.models import Produktionslinie, Station
+from virtuelle_fabrik.domain.models import (
+    Produktionslinie,
+    Station,
+)
+from virtuelle_fabrik.optimization.controller import calc_optimization
 
 from virtuelle_fabrik.persistence.charge import get_charge
 from virtuelle_fabrik.persistence.database import async_session
-from virtuelle_fabrik.persistence.maschinen import get_maschine
+from virtuelle_fabrik.persistence.maschinen import get_maschine, get_maschinen
+from virtuelle_fabrik.persistence.produkte import get_arbeitsschritte
 from virtuelle_fabrik.persistence.produktionslinien import (
     add_produktionslinie,
+    get_or_create_produktionslinie,
     update_produktionslinie,
 )
 
@@ -37,6 +43,7 @@ class EditorNotification:
 class StationTO:
     id: str
     name: str
+    order: int
     maschinen: List[str]
     chargen: List[str]
 
@@ -56,6 +63,7 @@ def convert_to_produktionslinieto(
             StationTO(
                 id=x.id,
                 name=x.name,
+                order=x.order,
                 maschinen=list([m.id for m in x.maschinen]),
                 chargen=list([c.id for c in x.chargen]),
             )
@@ -67,44 +75,55 @@ def convert_to_produktionslinieto(
 class EditorNamespace(socketio.AsyncNamespace):
     _task: asyncio.Task | None = None
 
-    async def run_optimization(self):
-        # TODO: Actually do some optimization stuff
-        simulation_id = "1"
+    _id: str = "1"
 
-        await self.emit("simulationRunning", simulation_id)
-        await asyncio.sleep(5)
-        await self.emit(
-            "simulationFinished",
-            data=(
-                simulation_id,
-                asdict(
-                    EditorNotification(
-                        details="Die simulation lief ganz wunderbar und "
-                        + "es gibt nichts zu beanstanden! Priorität "
-                        + "kann medium oder low sein",
-                        type=NotificationType.SUCCESS,
-                    )
+    async def run_optimization(self, produktionslinie: Produktionslinie):
+        async with async_session() as session:
+            simulation_id = "1"
+            await self.emit("simulationRunning", simulation_id)
+
+            maschinen = await get_maschinen(session)
+            arbeitsschritte = await get_arbeitsschritte(session)
+
+            optimization = calc_optimization(
+                produktionslinie=produktionslinie,
+                maschinen=maschinen,
+                arbeitsschritte=arbeitsschritte,
+            )
+
+            # TODO: Optimization result has to be persisted
+
+            await self.emit(
+                "simulationFinished",
+                data=(
+                    simulation_id,
+                    asdict(
+                        EditorNotification(
+                            details="Die simulation lief ganz wunderbar und "
+                            + "es gibt nichts zu beanstanden! Priorität "
+                            + "kann medium oder low sein",
+                            type=NotificationType.SUCCESS,
+                        )
+                    ),
                 ),
-            ),
-        )
+            )
 
-    async def on_connect(self, sid, environ):
+    async def on_connect(self, sid, *args):
         async with async_session() as session:
             await self.emit(
                 "produktionslinieChanged",
-                convert_to_produktionslinieto(
-                    await add_produktionslinie(
-                        session, Produktionslinie(id=uuid.uuid4().hex)
-                    )
+                asdict(
+                    convert_to_produktionslinieto(
+                        await get_or_create_produktionslinie(session, self._id)
+                    ),
                 ),
+                to=sid,
             )
 
     def on_disconnect(self, sid):
         pass
 
-    async def on_changeProduktionslinie(
-        self, sid, produktionslineto: ProduktionslinieTO
-    ):
+    async def on_changeProduktionslinie(self, sid, produktionslineto: dict):
         async with async_session() as session:
 
             def synchronous_get_all(getter, list):
@@ -112,19 +131,22 @@ class EditorNamespace(socketio.AsyncNamespace):
                 return asyncio.gather(*results)
 
             produktionslinie = Produktionslinie(
-                id=produktionslineto.id,
+                id=produktionslineto["id"],
                 stationen=[
                     Station(
-                        id=s.id,
-                        name=s.name,
-                        maschinen=synchronous_get_all(get_maschine, s.maschinen),
-                        chargen=synchronous_get_all(get_charge, s.chargen),
+                        id=s["id"],
+                        name=s["name"],
+                        order=s["order"],
+                        maschinen=await synchronous_get_all(
+                            get_maschine, s["maschinen"]
+                        ),
+                        chargen=await synchronous_get_all(get_charge, s["chargen"]),
                     )
-                    for s in produktionslineto.stationen
+                    for s in produktionslineto["stationen"]
                 ],
             )
 
-            await update_produktionslinie(produktionslinie)
+            await update_produktionslinie(session, produktionslinie)
             await self.emit("produktionslinieChanged", produktionslineto, skip_sid=sid)
 
     async def on_validateProduktionslinie(
@@ -133,11 +155,33 @@ class EditorNamespace(socketio.AsyncNamespace):
         # TODO: actually validate incoming produktionslinie
         return []
 
-    async def on_startSimulation(self, sid, produktionslinieto: ProduktionslinieTO):
+    async def on_startSimulation(self, sid, produktionslinieto: dict):
         if self._task and not self._task.cancelled():
             self._task.cancel()
 
-        asyncio.create_task(self.run_optimization())
+        async with async_session() as session:
+
+            def synchronous_get_all(getter, list):
+                results = [getter(session, x) for x in list]
+                return asyncio.gather(*results)
+
+            produktionslinie = Produktionslinie(
+                id=produktionslinieto["id"],
+                stationen=[
+                    Station(
+                        id=s["id"],
+                        name=s["name"],
+                        order=s["order"],
+                        maschinen=await synchronous_get_all(
+                            get_maschine, s["maschinen"]
+                        ),
+                        chargen=await synchronous_get_all(get_charge, s["chargen"]),
+                    )
+                    for s in produktionslinieto["stationen"]
+                ],
+            )
+
+        asyncio.create_task(self.run_optimization(produktionslinie))
 
     async def on_cancelSimulation(self, sid):
         if not self._task:
@@ -152,7 +196,7 @@ class EditorNamespace(socketio.AsyncNamespace):
 def setupWebsocket(app: FastAPI):
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=[])
     _app = socketio.ASGIApp(socketio_server=sio, socketio_path="socket.io")
-    app.mount("/ws", _app)
-    app.sio = sio
+    app.mount("/api/ws", _app)
+    app.sio = sio  # type: ignore[attr-defined]
 
     sio.register_namespace(EditorNamespace("/szenarios/1/editor/"))

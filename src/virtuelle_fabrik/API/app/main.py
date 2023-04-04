@@ -6,20 +6,26 @@ from attrs import asdict
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+import numpy as np
 from pydantic import BaseConfig, BaseModel
 
 from virtuelle_fabrik.domain.exception import DomainException
 from virtuelle_fabrik.domain.models import (
     Arbeitsschritt,
     Charge,
+    LeistungsErgebnis,
     Maschine,
     MaschinenBefaehigung,
+    Maschinenauslastung,
     Material,
     Materialbedarf,
+    Optimierung,
+    OptimierungsErgebnis,
     Produkt,
     Produktbedarf,
     Produktionsschritt,
 )
+from virtuelle_fabrik.optimization.controller import calc_optimization
 from virtuelle_fabrik.persistence.charge import (
     add_charge,
     get_all_chargen,
@@ -46,6 +52,9 @@ from virtuelle_fabrik.persistence.produkte import (
     remove_arbeitsschritt,
     remove_material,
     remove_produkt,
+)
+from virtuelle_fabrik.persistence.produktionslinien import (
+    get_or_create_produktionslinie,
 )
 from .socket_handlers import setupWebsocket
 
@@ -507,6 +516,94 @@ async def delete_charge(charge_id: str):
     async with async_session() as session:
         await remove_charge(session, charge_id)
         return {"message": "Charge with id: {} deleted successfully!".format(charge_id)}
+
+
+class MaschinenauslastungTO(APIModel):
+    maschine: str
+    arbeitsschritt: str
+    auslastung: float
+
+
+class LeistungsErgebnisTO(APIModel):
+    kosten_produkt: float
+    maschinenauslastung: list[MaschinenauslastungTO]
+
+
+class OptimierungsErgebnisTO(APIModel):
+    station: str
+    name: str
+    charge: str
+    gegeben: LeistungsErgebnisTO
+    optimiert: LeistungsErgebnisTO
+
+
+class OptimierungTO(APIModel):
+    id: str
+    ausfuehrung: str
+    produktionslinie: str
+    stationen: list[OptimierungsErgebnisTO]
+
+
+def convert_to_maschinenauslastungto(obj: Maschinenauslastung):
+    return MaschinenauslastungTO(
+        maschine=obj.maschine.id,
+        arbeitsschritt=obj.arbeitsschritt.id,
+        auslastung=obj.auslastung,
+    )
+
+
+def convert_to_leistungsergebnisto(obj: LeistungsErgebnis):
+    return LeistungsErgebnisTO(
+        kosten_produkt= 0 if np.isnan(obj.kosten_produkt) else obj.kosten_produkt,
+        maschinenauslastung=[
+            convert_to_maschinenauslastungto(a) for a in obj.maschinenauslastung
+        ],
+    )
+
+
+def convert_to_optimierungsergebnisto(obj: OptimierungsErgebnis):
+    return OptimierungsErgebnisTO(
+        station=obj.station.id,
+        name=obj.station.name,
+        charge=obj.station.chargen[0].id,
+        gegeben=convert_to_leistungsergebnisto(obj.gegeben),
+        optimiert=convert_to_leistungsergebnisto(obj.optimiert),
+    )
+
+
+def convert_to_optimizationto(obj: Optimierung):
+    return OptimierungTO(
+        id=obj.id,
+        ausfuehrung=obj.ausfuehrung,
+        produktionslinie=obj.produktionslinie.id,
+        stationen=[convert_to_optimierungsergebnisto(s) for s in obj.stationen],
+    )
+
+
+@szenario_router.get(
+    "/optimierungen/",
+    response_model=List[OptimierungTO],
+    status_code=status.HTTP_200_OK,
+)
+async def read_all_optimierungen(szenario_id: str, skip: int = 0, take: int = 20):
+    async with async_session() as session:
+        produktionslinie = await get_or_create_produktionslinie(session, "1")
+        maschinen = await get_maschinen(session)
+        arbeitsschritte = await get_arbeitsschritte(session)
+
+        res = [
+            convert_to_optimizationto(
+                calc_optimization(
+                    produktionslinie=produktionslinie,
+                    maschinen=maschinen,
+                    arbeitsschritte=arbeitsschritte,
+                )
+            )
+        ]
+
+        print(res)
+
+        return res
 
 
 app.include_router(szenario_router)

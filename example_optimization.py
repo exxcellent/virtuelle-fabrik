@@ -5,6 +5,7 @@ import os
 
 sys.path.insert(0, os.getcwd())
 
+from virtuelle_fabrik.API.app.main import convert_to_optimizationto
 from virtuelle_fabrik.domain.models import (
     Arbeitsschritt,
     Charge,
@@ -70,7 +71,7 @@ def sample_optimization():
             mitarbeiter_min=0,
             mitarbeiter_max=0,
             maschinenbefaehigungen=[
-                MaschinenBefaehigung(id="1", schritt_id="1", taktrate=2)
+                MaschinenBefaehigung(id="1", schritt_id="1", taktrate=2.0)
             ],
         ),
         Maschine(
@@ -82,7 +83,7 @@ def sample_optimization():
             mitarbeiter_min=0,
             mitarbeiter_max=0,
             maschinenbefaehigungen=[
-                MaschinenBefaehigung(id="1", schritt_id="1", taktrate=10)
+                MaschinenBefaehigung(id="1", schritt_id="1", taktrate=10.0)
             ],
         ),
         Maschine(
@@ -156,5 +157,8 @@ def sample_optimization():
         )
 
     opt = calc_optimization(produktionslinie, maschinen, arbeitsschritte)
+
+
+    print(convert_to_optimizationto(opt))
 
 sample_optimization()

@@ -58,7 +58,7 @@ def create_production_frequency_estimator(
         for produktionsschritt in produkt.produktionsschritte:
             step_freq = 0
             for maschine in produktionsschritt_id_to_maschine_mapping.get(
-                produktionsschritt.id, []
+                produktionsschritt.arbeitsschritt.id, []
             ):
                 step_freq += (
                     maschine.taktrate

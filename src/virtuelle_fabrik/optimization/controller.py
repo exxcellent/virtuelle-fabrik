@@ -29,7 +29,7 @@ def get_bounds(maschinen):
     i = 0
     bounds = []
     while i < l:
-        bounds.append((1e-6, 1))
+        bounds.append((0, 1))
         i += 1
     return bounds
 
@@ -54,8 +54,9 @@ def calc_optimized(
 ) -> LeistungsErgebnis:
 
     opt = costs_per_product_optimization(produkt, maschinen)
+    print("optimierunsergebnis", opt)
 
-    # transforms map of arbeitsschrittId to dict, to a map of maschinen_id to Arbeitsschritt
+    # dict to lookup arbeitsschritt that was assigned to a machine
     arbeitsschritte_dict = {
         maschine.machine_id: next((a for a in arbeitsschritte if a.id == schritt), None)
         for schritt, maschinen in opt.m_mapping.items()
@@ -71,8 +72,8 @@ def calc_optimized(
         for i, m in enumerate(maschinen)
     ]
 
-    # filter 0 utilisation
-    auslastungen = list(filter(lambda m: m.auslastung > 0.0, auslastungen))
+    # filter machines with 0% utilization
+    # auslastungen = list(filter(lambda m: m.auslastung > 0.0, auslastungen))
 
     return LeistungsErgebnis(
         kosten_produkt=round(opt.fun, 2), maschinenauslastung=auslastungen
